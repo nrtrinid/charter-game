@@ -1,0 +1,42 @@
+starting_roster:
+  - id: hero_watchman
+    name: Mara Vell
+    class_id: watchman
+    formation_slot: FRONT_LEFT
+    background: failed road warden
+    motive: needs charter pay before creditors find her
+  - id: hero_cutpurse
+    name: Senn Crowe
+    class_id: cutpurse
+    formation_slot: FRONT_RIGHT
+    background: lockbreaker under sentence
+    motive: accepted company work as a legal alternative to a cell
+  - id: hero_field_surgeon
+    name: Ilyra Penn
+    class_id: field_surgeon
+    formation_slot: BACK_LEFT
+    background: dismissed field surgeon
+    motive: wants enough reputation to practice without a patron
+  - id: hero_scribe
+    name: Orren Vale
+    class_id: scribe
+    formation_slot: BACK_RIGHT
+    background: failed academy researcher
+    motive: believes Maze relics can buy back his name
+recruitment_pool:
+  - name: Toma Redhand
+    class_id: watchman
+    background: debtor militia veteran
+    motive: owes three lenders and one undertaker
+  - name: Bryn Lock
+    class_id: cutpurse
+    background: dockside cutpurse
+    motive: wants a charter badge between them and the gallows
+  - name: Elian Stitch
+    class_id: field_surgeon
+    background: barber-surgeon
+    motive: follows expedition work because wounds always pay
+  - name: Seda Quill
+    class_id: scribe
+    background: dismissed map clerk
+    motive: knows a fake safe-route map when she sees one

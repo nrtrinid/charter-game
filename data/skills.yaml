@@ -1,0 +1,475 @@
+skills:
+  basic_strike:
+    id: basic_strike
+    name: Basic Strike
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    accuracy: 92
+    damage: 2
+    damage_min: 1
+    damage_max: 2
+    tags: [basic, weapon]
+    description: A reliable close attack. Deals bonus damage to Marked targets.
+  stand_watch:
+    id: stand_watch
+    name: Stand Watch
+    category: support
+    effort_cost: 1
+    attack_type: melee
+    accuracy: 100
+    damage: 0
+    tags: [support, guard]
+    description: Apply Guarded to an ally.
+  frost_jab:
+    id: frost_jab
+    name: Frost Jab
+    category: special
+    effort_cost: 1
+    attack_type: melee
+    accuracy: 90
+    damage: 3
+    damage_min: 2
+    damage_max: 3
+    tags: [effort, frost]
+    description: Damage a foe. Freezes Wet targets, otherwise Marks them.
+  soak:
+    id: soak
+    name: Soak
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    accuracy: 100
+    damage: 0
+    tags: [effort, soak]
+    description: Apply Wet to a target and douse Burning.
+  spark_line:
+    id: spark_line
+    name: Spark Line
+    category: special
+    effort_cost: 2
+    attack_type: magic
+    accuracy: 95
+    damage: 2
+    damage_min: 1
+    damage_max: 2
+    tags: [effort, shock]
+    description: Strikes harder against Wet targets and applies Shocked.
+  rally:
+    id: rally
+    name: Rally
+    category: support
+    effort_cost: 1
+    attack_type: melee
+    accuracy: 100
+    damage: 0
+    tags: [support, rally]
+    description: Raise an ally's Morale by one step, up to Steady.
+  guard_strike:
+    id: guard_strike
+    name: Guard Strike
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 92
+    damage: 3
+    damage_min: 2
+    damage_max: 3
+    tags: [basic, weapon]
+    description: A practiced close attack from someone used to holding a line.
+  shield_drive:
+    id: shield_drive
+    name: Watchman's Shove
+    category: special
+    effort_cost: 1
+    attack_type: reach
+    usable_from: front_only
+    accuracy: 88
+    damage: 3
+    damage_min: 2
+    damage_max: 3
+    tags: [effort, guard, formation, shove_back]
+    description: A hard shield shove that can reach down a lane and drive a front enemy backward.
+  knife_work:
+    id: knife_work
+    name: Sleeve Knife
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 94
+    damage: 3
+    damage_min: 2
+    damage_max: 3
+    tags: [basic, weapon]
+    description: Fast close work with a hidden blade.
+  exposed_cut:
+    id: exposed_cut
+    name: On the Mark
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    usable_from: any_position
+    accuracy: 90
+    damage: 3
+    damage_min: 2
+    damage_max: 3
+    tags: [effort, cutpurse, exposed, vulnerable_bonus, exposed_bonus]
+    description: Wherever they point, a dagger soon follows.
+    effect_text: Throw a knife at one enemy. Deals extra damage to Marked, wounded, or exposed backline targets.
+  bone_saw:
+    id: bone_saw
+    name: Bone Saw
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: any_position
+    accuracy: 86
+    damage: 2
+    damage_min: 1
+    damage_max: 2
+    tags: [basic, tool]
+    description: The best weapon the surgeon had was never meant to be one.
+    effect_text: Melee attack against one legal enemy using this skill's current targeting rules.
+  emergency_stitch:
+    id: emergency_stitch
+    name: Emergency Dressing
+    category: special
+    effort_cost: 1
+    attack_type: melee
+    usable_from: any_position
+    accuracy: 85
+    damage: 1
+    damage_min: 0
+    damage_max: 1
+    tags: [effort, field_surgeon, treatment, brink_heal]
+    description: Fast cloth, hard pressure, and just enough time to keep breathing.
+    effect_text: Heal one living ally. Heals more if the ally is Downed or at half HP or lower.
+  staff_jab:
+    id: staff_jab
+    name: Scribe's Staff
+    category: basic
+    effort_cost: 0
+    attack_type: reach
+    usable_from: any_position
+    accuracy: 86
+    damage: 2
+    damage_min: 1
+    damage_max: 2
+    tags: [basic, weapon]
+    description: A careful staff strike from behind the line.
+  abyssal_spark:
+    id: abyssal_spark
+    name: Inkblack Mark
+    category: special
+    effort_cost: 1
+    attack_type: magic
+    usable_from: any_position
+    accuracy: 95
+    damage: 3
+    damage_min: 2
+    damage_max: 3
+    tags: [effort, scribe, abyssal, mark]
+    description: The scribe draws a black sign the Maze seems to recognize.
+    effect_text: Magic attack against one enemy. Marks the target if it survives.
+  rusted_chop:
+    id: rusted_chop
+    name: Rusted Chop
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 62
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy]
+    description: A crude weapon swing.
+  shielding_dead:
+    id: shielding_dead
+    name: Shielding Dead
+    category: support
+    effort_cost: 1
+    attack_type: melee
+    accuracy: 100
+    damage: 0
+    tags: [enemy, support, guard]
+    description: The Bone Soldier throws its shield and bones in front of an ally.
+  skulker_stone:
+    id: skulker_stone
+    name: Skulker Stone
+    category: basic
+    effort_cost: 0
+    attack_type: ranged
+    accuracy: 61
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy]
+    description: A jagged stone from the dark.
+  cheap_shot:
+    id: cheap_shot
+    name: Cheap Shot
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    accuracy: 66
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, vulnerable_bonus]
+    description: A nasty throw that bites deeper into the wounded or Marked.
+  glass_bite:
+    id: glass_bite
+    name: Glass Bite
+    category: basic
+    effort_cost: 0
+    attack_type: magic
+    accuracy: 63
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, maze, leak]
+    description: An impossible bite that lands before the thing reaches you.
+  effort_drain:
+    id: effort_drain
+    name: Effort Drain
+    category: special
+    effort_cost: 1
+    attack_type: magic
+    accuracy: 66
+    damage: 1
+    damage_min: 1
+    damage_max: 2
+    tags: [enemy, maze, leak, effort_drain]
+    description: A glassy bite that steals a hero's remaining push.
+  maw_slam:
+    id: maw_slam
+    name: Maw Slam
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 68
+    damage: 3
+    damage_min: 3
+    damage_max: 4
+    tags: [enemy, boss, vulnerable_bonus]
+    description: A body-blow from the cave brute.
+    reaction_window: true
+    intent_label: Maw Slam
+    threat_level: high
+    obvious_effect: Heavy melee impact
+  drag_forward:
+    id: drag_forward
+    name: Drag Forward
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    accuracy: 80
+    damage: 1
+    damage_min: 1
+    damage_max: 2
+    tags: [enemy, boss, formation, drag_forward]
+    description: A hooked yank that pulls a backline hero into danger.
+    reaction_window: true
+    intent_label: Drag Forward
+    threat_level: medium
+    obvious_effect: Formation disruption
+  black_pulse:
+    id: black_pulse
+    name: Black Pulse
+    category: basic
+    effort_cost: 0
+    attack_type: magic
+    accuracy: 66
+    damage: 3
+    damage_min: 3
+    damage_max: 4
+    tags: [enemy, horror]
+    description: A pressure behind the eyes.
+    reaction_window: true
+    intent_label: Black Pulse
+    threat_level: high
+    obvious_effect: Strange magic pressure
+  mark_the_pattern:
+    id: mark_the_pattern
+    name: Mark the Pattern
+    category: special
+    effort_cost: 1
+    attack_type: magic
+    accuracy: 100
+    damage: 0
+    tags: [enemy, maze, horror, mark]
+    description: The Acolyte singles out one hero in the Maze's design.
+  splinter_mark:
+    id: splinter_mark
+    name: Splinter Mark
+    category: special
+    effort_cost: 1
+    attack_type: magic
+    accuracy: 92
+    damage: 1
+    damage_min: 1
+    damage_max: 2
+    tags: [enemy, maze, glass, mark]
+    description: A bright shard points through a hero and leaves the Maze looking.
+    reaction_window: true
+    intent_label: Splinter Mark
+    threat_level: medium
+    obvious_effect: Marking glass sting
+  ward_pattern:
+    id: ward_pattern
+    name: Ward Pattern
+    category: support
+    effort_cost: 1
+    attack_type: magic
+    accuracy: 100
+    damage: 0
+    tags: [enemy, maze, support, guard]
+    description: The Ward folds a black pattern over an ally.
+    intent_label: Ward Pattern
+    threat_level: medium
+    obvious_effect: Guarding support
+  stalker_cut:
+    id: stalker_cut
+    name: Stalker Cut
+    category: special
+    effort_cost: 0
+    attack_type: reach
+    usable_from: front_only
+    accuracy: 72
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, maze, hunter, vulnerable_bonus]
+    description: A long cut that finds heroes already marked by the breach.
+    reaction_window: true
+    intent_label: Stalker Cut
+    threat_level: high
+    obvious_effect: Mark payoff
+  stalker_hook:
+    id: stalker_hook
+    name: Stalker Hook
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    accuracy: 78
+    damage: 1
+    damage_min: 1
+    damage_max: 2
+    tags: [enemy, maze, hunter, formation, drag_forward]
+    description: A hook of black glass drags a safer hero into the wrong line.
+    reaction_window: true
+    intent_label: Stalker Hook
+    threat_level: medium
+    obvious_effect: Formation disruption
+  bandit_blade:
+    id: bandit_blade
+    name: Quick Blade
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 64
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, bandit]
+    description: A close cut from a practiced roadside thief.
+  dirty_finish:
+    id: dirty_finish
+    name: Dirty Finish
+    category: special
+    effort_cost: 1
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 66
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, bandit, vulnerable_bonus]
+    description: A cruel cut against a hero already in trouble.
+  sling_stone:
+    id: sling_stone
+    name: Sling Stone
+    category: basic
+    effort_cost: 0
+    attack_type: ranged
+    accuracy: 62
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, bandit]
+    description: A stone snapped from a bandit's sling.
+  pinning_shot:
+    id: pinning_shot
+    name: Pinning Shot
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    accuracy: 68
+    damage: 1
+    damage_min: 1
+    damage_max: 2
+    tags: [enemy, bandit, vulnerable_bonus]
+    description: A called shot that punishes a hero already exposed.
+  lookout_poke:
+    id: lookout_poke
+    name: Nervous Jab
+    category: basic
+    effort_cost: 0
+    attack_type: ranged
+    accuracy: 58
+    damage: 1
+    damage_min: 1
+    damage_max: 2
+    tags: [enemy, bandit]
+    description: A weak attack from someone watching the exits.
+  spot_target:
+    id: spot_target
+    name: Spot Target
+    category: special
+    effort_cost: 1
+    attack_type: ranged
+    accuracy: 100
+    damage: 0
+    tags: [enemy, bandit, mark]
+    description: The lookout calls out one hero for the others.
+  wolf_bite:
+    id: wolf_bite
+    name: Bite
+    category: basic
+    effort_cost: 0
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 68
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, wolf]
+    description: A fast snapping bite.
+  pack_bite:
+    id: pack_bite
+    name: Pack Bite
+    category: special
+    effort_cost: 1
+    attack_type: melee
+    usable_from: front_only
+    accuracy: 70
+    damage: 2
+    damage_min: 2
+    damage_max: 3
+    tags: [enemy, wolf, vulnerable_bonus]
+    description: A bite that turns ugly when the prey is wounded or Marked.
+  howl:
+    id: howl
+    name: Howl
+    category: special
+    effort_cost: 1
+    attack_type: magic
+    accuracy: 100
+    damage: 0
+    tags: [enemy, wolf, mark]
+    description: The alpha fixes the pack's attention on one hero.

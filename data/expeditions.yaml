@@ -1,0 +1,527 @@
+expeditions:
+  opening:
+    id: opening
+    name: The Old Road to Shallow Cave
+    nodes:
+      - id: town_gate
+        name: Haven East Gate
+        node_type: road
+        text: A townsman at the gate spits dust and says, "The cave is past the dry creek. Look for black stones. Don't follow the birds unless you want wolves."
+        scene_state: "Haven's lamps are still close enough to retreat by."
+        revisit_text: The east gate stands open behind you, its hinges ticking in the wind from town.
+        route_hint: Dust trails east under the trees; town waits at your back.
+        party_hint: Someone in the line checks the gate twice before stepping beyond it.
+        map_id: old_road_wilderness
+        position: [0, 1]
+        safe_return: true
+        flags_set:
+          act_1_frontier_company_started: true
+        exits: [old_road]
+      - id: old_road
+        name: Old Road
+        node_type: road
+        text: The old road splits under leaning pines. West, black birds circle above a silent hollow. East, wagon ruts angle toward a dry creek bed. A ruined toll post sags beside the road.
+        scene_state: The road behind is known. The trees ahead are not.
+        revisit_text: The leaning pines still divide the road, but the company's boot marks now cut through the dust.
+        route_hint: Crows gather west. Wagon ruts bend east. The toll post watches from the roadside.
+        map_id: old_road_wilderness
+        position: [0, 0]
+        lore_entries:
+          - roads_that_repeat
+        exits: [town_gate, abandoned_toll_post, hunters_trail, bramble_shrine]
+      - id: abandoned_toll_post
+        name: Abandoned Toll Post
+        node_type: curio
+        text: "Toll boards are scratched with warnings, prices, and one fresh mark: CAVE PAST CREEK, BLACK STONES. Fresh bootprints head behind the post."
+        scene_state: The fresh warning is carved deeper than the old prices.
+        revisit_text: The toll boards keep their warnings. The desk remembers every hand that searched it.
+        route_hint: The old road lies east; a low campfire smell leaks from behind the post.
+        map_id: old_road_wilderness
+        position: [-1, 0]
+        exits: [old_road, bandit_camp]
+        actions:
+          - id: search_toll_drawer
+            label: Search Toll Drawer
+            description: Check the splintered desk and the old fee box.
+            result_text: "The drawer yields a ration and a charcoal note repeating the townsman's warning: birds west, creek east, black stones south."
+            coin_reward: 1
+            supply_rewards:
+              rations: 1
+      - id: bandit_camp
+        name: Bandit Camp
+        node_type: combat
+        text: A low campfire burns behind the toll post. The voices stop when the company steps into view.
+        scene_state: Smoke hangs low enough to hide a knife hand.
+        revisit_text: The campfire has burned down to grey ash and boot-scuffed mud.
+        route_hint: The toll post is the only clean way back to the road.
+        party_hint: The line tightens without anyone needing to say it.
+        map_id: old_road_wilderness
+        position: [-2, 0]
+        encounter: road_bandits
+        exits: [abandoned_toll_post]
+      - id: hunters_trail
+        name: Hunter's Trail
+        node_type: wilderness
+        text: The east trail follows old hunter notches and wagon ruts. Crows call from the west, but the ruts keep bending toward a stony, dry creek.
+        scene_state: Old notches mark the trees where the path tries to vanish.
+        revisit_text: The hunter marks are easier to read now, bright cuts in dark bark.
+        route_hint: Birds wheel west; wagon scars pull toward the dry creek.
+        map_id: old_road_wilderness
+        position: [1, 0]
+        exits: [old_road, wolf_hollow, dry_creek_bed]
+        actions:
+          - id: follow_wagon_scars
+            label: Follow Fresh Wagon Scars
+            description: The ruts are too fresh and too deep for a road the company already walked.
+            result_text: The scars bend off the hunter marks toward a cut the map insists should not exist.
+            requires_active_contracts: [missing_carters]
+            reveal_exits: [wagon_cut]
+      - id: wagon_cut
+        name: Wagon Cut
+        node_type: wilderness
+        text: Wagon scars cut through brush where no road belongs. A mile marker leans at the wrong angle, its paint still wet, and the number on it matches one the company passed an hour ago.
+        scene_state: The cut remembers a wagon that should not have been here twice.
+        revisit_text: The wrong mile marker still leans; the scars have not faded.
+        route_hint: Wheel ruts deepen toward a wreck the trees tried to hide.
+        map_id: old_road_wilderness
+        position: [1, 1]
+        exits: [hunters_trail, carter_wreck]
+      - id: carter_wreck
+        name: Carter Wreck
+        node_type: combat
+        text: A charter wagon lies broken across its own tracks. Harness leather is cut in clean lines, wheels are splintered as if the road folded beneath them, and company cargo still wears paid delivery tags. Something has been waiting in the torn packs.
+        scene_state: The wreck still smells of wet ledger ink and frightened animals.
+        revisit_text: Broken wheels and charter tags remain after the fight.
+        route_hint: The wagon cut is the only honest way back.
+        party_hint: Nobody trusts how quiet the repeating road has become.
+        map_id: old_road_wilderness
+        position: [1, 2]
+        encounter: wolf_pack
+        exits: [wagon_cut]
+        actions:
+          - id: recover_lost_carter
+            label: Recover the Lost Carter
+            description: Cut the harness free and bring back whoever still answers to the ledger.
+            result_text: >-
+              One carter is alive, shaking, and certain the road repeated until they followed
+              their own wheel tracks. Haven will call that proof.
+            requires_cleared: true
+            requires_active_contracts: [missing_carters]
+            once: true
+            complete_contract: missing_carters
+            history: missing_carters_resolved
+            flags_set:
+              missing_carters_survivor_found: true
+            loot:
+              carter_brass_tag: 1
+              carter_ledger_page: 1
+      - id: wolf_hollow
+        name: Wolf Hollow
+        node_type: combat
+        text: Circling birds mark a hollow of bones, torn packs, and wolf tracks. The warning was fair; this is the bad way.
+        scene_state: Bones whiten in the grass where the hollow dips out of sight.
+        revisit_text: The hollow is quieter now, but the birds have not left.
+        route_hint: The hunter's trail climbs back to safer ground.
+        party_hint: Nobody jokes here.
+        map_id: old_road_wilderness
+        position: [1, -2]
+        encounter: wolf_pack
+        exits: [hunters_trail]
+      - id: dry_creek_bed
+        name: Dry Creek Bed
+        node_type: landmark
+        text: The creek has no water, only white stones and dust. A trail of black stones crosses the bed and runs south beneath thorn trees.
+        scene_state: The black stones look placed, not fallen.
+        revisit_text: White creek stones crunch under familiar boots; the black trail still points south.
+        route_hint: Hunter notches fade behind you. Black stones run toward colder air.
+        map_id: old_road_wilderness
+        position: [2, 0]
+        exits: [hunters_trail, black_stone_sinkhole]
+      - id: bramble_shrine
+        name: Bramble Shrine
+        node_type: curio
+        text: A mossy roadside shrine leans into the brambles. Its little stone deer faces away from the road, toward a gap too narrow for wagons.
+        scene_state: The stone deer points where maps would not bother.
+        revisit_text: The shrine leans as before, but the brambles show where hands forced a path.
+        route_hint: The old road is visible through thorns; the deer's gaze cuts elsewhere.
+        map_id: old_road_wilderness
+        position: [0, -1]
+        exits: [old_road]
+        actions:
+          - id: clear_bramble_path
+            label: Clear Brambles
+            description: Pull thorns aside and follow the stone deer's gaze.
+            result_text: The hidden deer path opens. It does not point straight at the cave, but it cuts cleanly toward the black stone sinkhole.
+            reveal_exits: [hidden_deer_path]
+      - id: hidden_deer_path
+        name: Hidden Deer Path
+        node_type: shortcut
+        text: The deer path is narrow and old, but it remembers the land better than the road does. Black stones glimmer through the brush ahead.
+        scene_state: The path is too narrow for a wagon and too deliberate to be accident.
+        revisit_text: Broken thorns and bent grass make the deer path easier to trust.
+        route_hint: The shrine is behind you. Black stones glimmer ahead through the brush.
+        map_id: old_road_wilderness
+        position: [2, -1]
+        exits: [bramble_shrine, black_stone_sinkhole]
+      - id: black_stone_sinkhole
+        name: Black Stone Sinkhole
+        node_type: hazard
+        text: Black stones ring a collapsed sinkhole. The slope is cracked and mean underfoot, but cave-cold air breathes from a narrow mouth below.
+        scene_state: Cold air climbs from below without any wind to carry it.
+        revisit_text: The sinkhole still exhales cave-cold air through its black stone teeth.
+        route_hint: The dry creek is uphill; the cave mouth waits below the ring.
+        party_hint: Boots slow at the rim.
+        map_id: old_road_wilderness
+        position: [2, 1]
+        exits: [dry_creek_bed, shallow_cave_entrance]
+      - id: shallow_cave_entrance
+        name: Shallow Cave Entrance
+        node_type: cave_entrance
+        text: The black stones end at the cave mouth. The company has found the Shallow Cave; from now on, this route can be followed from Haven without solving the wilds again.
+        scene_state: The wilds end at a mouth of cold stone.
+        revisit_text: The black stones make the cave easy to find now. That does not make it friendly.
+        route_hint: The sinkhole climbs back to daylight; the cave drinks the road south.
+        party_hint: The company knows this route now, which is not the same as owning it.
+        major_beat: true
+        map_id: old_road_wilderness
+        position: [2, 2]
+        safe_return: true
+        known_route_unlock: shallow_cave
+        flags_set:
+          shallow_cave_discovered: true
+        exits: [black_stone_sinkhole, shallow_cave_room_1]
+      - id: shallow_cave_room_1
+        name: Cave Mouth
+        node_type: narrative
+        text: The first chamber is low and cold. Scratched warning marks point deeper, but the daylight behind the company still makes retreat easy.
+        scene_state: Daylight spills just far enough to make retreat feel possible.
+        revisit_text: The cave mouth remembers your lantern soot. The warning marks still point deeper.
+        route_hint: Daylight waits behind; the scratched marks lean into the descent.
+        major_beat: true
+        map_id: shallow_cave
+        position: [0, 0]
+        exits: [cave_fork]
+        safe_return: true
+        next_node: cave_fork
+      - id: cave_fork
+        name: Forked Descent
+        node_type: landmark
+        text: The cave splits around a black seam in the floor. Left, fungus glows around old tool marks. Right, a narrow crawl smells of dust and disturbed stone.
+        scene_state: The black seam divides the chamber like a decision already made.
+        revisit_text: "The fork is easier to read now: fungus glow to one side, tight stone to the other."
+        route_hint: Pale light gathers left. Loose stone breathes dust to the right.
+        map_id: shallow_cave
+        position: [0, 1]
+        exits: [shallow_cave_room_1, fungus_chamber, narrow_crawl]
+      - id: fungus_chamber
+        name: Fungus-Lit Gallery
+        node_type: curio
+        text: Pale fungus lights a wall of tally marks. The older marks count miners; the newest count companies. A bronze key shape is sketched beside a warning about the gate below.
+        scene_state: The newest tally marks have not had time to fade.
+        revisit_text: The fungus still lights the tally wall, and the brass key sketch still points the way.
+        route_hint: The cache lies beyond old works; the black gate waits below.
+        map_id: shallow_cave
+        position: [-1, 1]
+        exits: [cave_fork, old_works_cache, stone_gate]
+        lore_entries:
+          - caves_count_companies
+      - id: old_works_cache
+        name: Old Works Cache
+        node_type: combat
+        text: A cache box sits under webbing and bone charms. Something has been nesting around the lock.
+        scene_state: Webbing clings to the lock like a warning left by something patient.
+        revisit_text: The cache is open, webbing cut away from the brass key's hiding place.
+        route_hint: The fungus gallery is the cleanest way out.
+        party_hint: Senn keeps a blade low near the lock.
+        map_id: shallow_cave
+        position: [-2, 1]
+        encounter: shallow_cave
+        exits: [fungus_chamber]
+        actions:
+          - id: recover_gate_key
+            label: Recover Gate Key
+            description: Cut the webbing and search the cache after the fight.
+            result_text: A brass cave key drops from the cache wrappings. It fits the gate sketched in the fungus gallery.
+            requires_cleared: true
+            coin_reward: 3
+            loot:
+              cave_key: 1
+      - id: narrow_crawl
+        name: Narrow Crawl
+        node_type: hazard
+        text: The crawl bypasses the fungus gallery but scrapes packs, knees, and patience. Loose stones above the passage warn against rushing.
+        scene_state: The ceiling hangs low enough to make every pack feel too loud.
+        revisit_text: Scrapes on stone mark where the company learned the crawl's shape.
+        route_hint: The fork is behind you; the gate breathes colder air ahead.
+        party_hint: Someone checks the rope before moving on.
+        map_id: shallow_cave
+        position: [0, 2]
+        exits: [cave_fork, stone_gate]
+        actions:
+          - id: brace_loose_stones
+            label: Brace Loose Stones
+            description: Spend rope to make this crawl safer for retreat.
+            result_text: The rope brace holds the worst stones back. It will not open the gate, but it makes this side passage less punishing.
+            supply_costs:
+              rope: 1
+      - id: stone_gate
+        name: Black Stone Gate
+        node_type: obstacle
+        text: A squat black gate blocks the lower lair. Claw marks stop before it. The lock is brass; the hinges are old enough that rope and leverage might force them once.
+        scene_state: The gate waits. The brass lock is still shut.
+        revisit_text: The black gate no longer bars the way, but the claw marks still stop before it.
+        route_hint: The gallery and crawl both lead back; beyond the gate, the air turns wrong.
+        party_hint: Ilyra watches the hinges while the others watch the dark.
+        major_beat: true
+        map_id: shallow_cave
+        position: [-1, 2]
+        exits: [fungus_chamber, narrow_crawl]
+        actions:
+          - id: unlock_black_gate
+            label: Unlock Black Gate
+            description: Use the brass cave key from the old works cache.
+            result_text: The brass key turns. The gate opens onto a chamber whose angles do not agree with the lantern light.
+            inventory_requirements:
+              cave_key: 1
+            reveal_exits: [maze_touched_lair]
+          - id: force_black_gate
+            label: Force Black Gate
+            description: Spend rope to haul the warped hinges open without the key.
+            result_text: Rope creaks, stone cracks, and the gate opens just wide enough. Something deeper answers the noise.
+            supply_costs:
+              rope: 1
+            reveal_exits: [maze_touched_lair]
+      - id: maze_touched_lair
+        name: Maze-Touched Lair
+        node_type: boss
+        text: The cave brute rises from broken packs, unpaid salvage tags, and a noble's stamped expedition crate. Black stone grows through its ribs.
+        scene_state: Salvage tags flutter around a thing that should have stayed dead.
+        revisit_text: Broken packs and black stone remain after the brute's fall.
+        route_hint: The black gate is the last honest shape behind you.
+        party_hint: The company spreads out before anyone gives the order.
+        major_beat: true
+        map_id: shallow_cave
+        position: [-1, 3]
+        exits: [stone_gate]
+        encounter: cave_mini_boss
+        next_node: cave_mini_boss
+      - id: cave_mini_boss
+        name: Cave Maw Brute Defeated
+        node_type: boss
+        text: The Cave Maw Brute falls. The warrant is fulfilled, but the proof is stranger than the contract described.
+        scene_state: The brute is down, and the proof in its ribs is worse than expected.
+        revisit_text: The lair is still now; only the black stone in the carcass seems busy.
+        route_hint: The back wall no longer looks like cave stone.
+        major_beat: true
+        map_id: shallow_cave
+        position: [-1, 4]
+        breach_id: shallow_cave_breach
+        complete_contract: blackwood_road_charter
+        loot:
+          cave_relic: 1
+        history: shallow_cave_boss_defeated
+        next_node: maze_breach
+      - id: maze_breach
+        name: Shallow Cave Breach
+        node_type: breach
+        text: The back wall opens onto a cold chamber that should not exist. The stonework bends wrong, as if the cave has been taught a deeper geometry.
+        scene_state: The breach is not a hole. It is an argument against the room.
+        revisit_text: The impossible chamber remains, patient as an unpaid debt.
+        route_hint: Cave stone ends here. The Maze begins without asking permission.
+        party_hint: No one steps through first until everyone has looked back once.
+        major_beat: true
+        map_id: shallow_cave_breach
+        position: [0, 0]
+        exits:
+          - maze_touched_lair
+        lore_entries:
+          - maze_profit_invites
+        flags_set:
+          maze_leak_confirmed: true
+      - id: maze_depth_1
+        name: Pandora's Maze Depth 1
+        node_type: maze
+        text: The first impossible rooms wait below, already a little more stable because people keep naming the way in.
+        scene_state: The first depth holds its shape only because witnesses keep agreeing on it.
+        revisit_text: The first depth has not changed much. That is what makes it frightening.
+        route_hint: The way back is still visible, but it is no longer simple.
+        party_hint: Orren counts turns under his breath and stops before ten.
+        major_beat: true
+        map_id: maze_depth_1
+        position: [0, 0]
+        encounter: maze_depth_1
+        horror_morale_loss: 1
+        loot:
+          maze_glass: 1
+        history: maze_depth_1_scouted
+        next_node: maze_depth_1_room_1
+      - id: maze_depth_1_room_1
+        name: Black Stone Room
+        node_type: narrative
+        text: Black stone sweats under lantern light. Old bootprints cross the ceiling and stop at a chalk auction mark.
+        scene_state: The ceiling has footprints where the floor should have kept them.
+        revisit_text: The chalk mark is still there, pricing what nobody should own.
+        route_hint: The next niche glints with Maze-glass.
+        map_id: maze_depth_1
+        position: [0, 1]
+        next_node: maze_depth_1_room_3
+      - id: maze_depth_1_room_3
+        name: Maze-Glass Niche
+        node_type: narrative
+        text: The company pockets a shard of maze-glass. It is valuable enough to make returning sound reasonable.
+        scene_state: Maze-glass catches lantern light and gives back a different room.
+        revisit_text: The niche is empty now, but reflections still move too late.
+        route_hint: The descent bends toward a place where leaving feels wise.
+        party_hint: Nobody says what the shard might sell for until it is wrapped.
+        map_id: maze_depth_1
+        position: [0, 2]
+        next_node: maze_retreat
+      - id: maze_retreat
+        name: First Retreat
+        node_type: narrative
+        text: The first descent ends before the path turns stranger. Good companies survive by leaving before the profit does.
+        scene_state: The path keeps going. The company's nerve does not have to.
+        revisit_text: The retreat point waits like a lesson already paid for.
+        route_hint: Haven is the correct direction now.
+        major_beat: true
+        map_id: maze_depth_1
+        position: [0, 3]
+        next_node: haven_return
+      - id: haven_return
+        name: Haven Town
+        node_type: town
+        text: Survivors return to the charter house with proof, wounds, and a story worth more than the people who carried it.
+        scene_state: Haven's lamps turn the proof into paperwork.
+        revisit_text: The charter house is ready to turn survival into accounts.
+        route_hint: The expedition is over; every road now points back to the ledger.
+        party_hint: The company crosses the threshold quieter than it left.
+        major_beat: true
+        map_id: haven_town
+        position: [0, 0]
+encounters:
+  road_bandits:
+    id: road_bandits
+    enemies:
+      - enemy_id: bandit_cutthroat
+        actor_id: bandit_cutthroat_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: bandit_slinger
+        actor_id: bandit_slinger_1
+        formation_slot: BACK_LEFT
+      - enemy_id: bandit_lookout
+        actor_id: bandit_lookout_1
+        formation_slot: BACK_RIGHT
+  wolf_pack:
+    id: wolf_pack
+    enemies:
+      - enemy_id: wolf
+        actor_id: wolf_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: alpha_wolf
+        actor_id: wolf_2
+        formation_slot: BACK_LEFT
+      - enemy_id: wolf
+        actor_id: wolf_3
+        formation_slot: FRONT_RIGHT
+  shallow_cave:
+    id: shallow_cave
+    enemies:
+      - enemy_id: bone_soldier
+        actor_id: bone_soldier_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: bone_soldier
+        actor_id: bone_soldier_2
+        formation_slot: FRONT_RIGHT
+      - enemy_id: skulker
+        actor_id: skulker_1
+        formation_slot: BACK_LEFT
+      - enemy_id: maze_leech
+        actor_id: maze_leech_1
+        formation_slot: BACK_RIGHT
+  cave_mini_boss:
+    id: cave_mini_boss
+    enemies:
+      - enemy_id: cave_maw_brute
+        actor_id: cave_maw_brute_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: bone_soldier
+        actor_id: bone_soldier_2
+        formation_slot: FRONT_RIGHT
+  maze_depth_1:
+    id: maze_depth_1
+    enemies:
+      - enemy_id: maze_acolyte
+        actor_id: maze_acolyte_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: breach_stalker
+        actor_id: breach_stalker_1
+        formation_slot: FRONT_RIGHT
+      - enemy_id: maze_leech
+        actor_id: maze_leech_1
+        formation_slot: BACK_RIGHT
+  generated_maze_probe:
+    id: generated_maze_probe
+    enemies:
+      - enemy_id: maze_leech
+        actor_id: maze_leech_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: glass_splinter
+        actor_id: glass_splinter_1
+        formation_slot: BACK_LEFT
+      - enemy_id: glass_splinter
+        actor_id: glass_splinter_2
+        formation_slot: BACK_RIGHT
+  generated_maze_pattern_cell:
+    id: generated_maze_pattern_cell
+    enemies:
+      - enemy_id: maze_acolyte
+        actor_id: maze_acolyte_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: pattern_ward
+        actor_id: pattern_ward_1
+        formation_slot: FRONT_RIGHT
+      - enemy_id: glass_splinter
+        actor_id: glass_splinter_1
+        formation_slot: BACK_LEFT
+  generated_maze_glass_pack:
+    id: generated_maze_glass_pack
+    enemies:
+      - enemy_id: glass_splinter
+        actor_id: glass_splinter_1
+        formation_slot: BACK_LEFT
+      - enemy_id: glass_splinter
+        actor_id: glass_splinter_2
+        formation_slot: BACK_RIGHT
+      - enemy_id: maze_leech
+        actor_id: maze_leech_1
+        formation_slot: FRONT_LEFT
+  generated_maze_stalker:
+    id: generated_maze_stalker
+    enemies:
+      - enemy_id: breach_stalker
+        actor_id: breach_stalker_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: pattern_ward
+        actor_id: pattern_ward_1
+        formation_slot: FRONT_RIGHT
+      - enemy_id: glass_splinter
+        actor_id: glass_splinter_1
+        formation_slot: BACK_LEFT
+  generated_maze_hunt_guarded:
+    id: generated_maze_hunt_guarded
+    enemies:
+      - enemy_id: cave_maw_brute
+        actor_id: breach_maw_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: pattern_ward
+        actor_id: pattern_ward_1
+        formation_slot: FRONT_RIGHT
+  generated_maze_hunt:
+    id: generated_maze_hunt
+    enemies:
+      - enemy_id: cave_maw_brute
+        actor_id: breach_maw_1
+        formation_slot: FRONT_LEFT
+      - enemy_id: pattern_ward
+        actor_id: pattern_ward_1
+        formation_slot: FRONT_RIGHT

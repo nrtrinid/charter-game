@@ -1,0 +1,24 @@
+loot:
+  cave_key:
+    id: cave_key
+    name: Cave Key
+    description: A brass key from the Old Works cache that fits the black stone gate.
+  maze_glass:
+    id: maze_glass
+    name: Maze-Glass
+    description: A black shard that reflects the room from the wrong side.
+    sell_price: 6
+  cave_relic:
+    id: cave_relic
+    name: Cave Relic
+    description: Proof from the Shallow Cave charter job - stamped, cold, and disputed.
+    turn_in_flag: cave_relic_filed
+    turn_in_unlocks_contract: missing_carters
+  carter_brass_tag:
+    id: carter_brass_tag
+    name: Carter Brass Tag
+    description: A charter tag cut from a broken harness buckle.
+  carter_ledger_page:
+    id: carter_ledger_page
+    name: Carter Ledger Page
+    description: A soaked page listing mile markers that appear twice.

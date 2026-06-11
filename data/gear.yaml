@@ -1,0 +1,52 @@
+gear:
+  reinforced_vest:
+    id: reinforced_vest
+    name: Reinforced Vest
+    description: A patched road vest with a second layer over the ribs.
+    slot: kit
+    cost: 6
+    requires_completed_contracts: [blackwood_road_charter]
+    effects:
+      max_hp_bonus: 1
+    tags: [kit, armory]
+  field_satchel:
+    id: field_satchel
+    name: Field Satchel
+    description: Better straps, cleaner wraps, and enough pockets to matter.
+    slot: kit
+    cost: 6
+    requires_completed_contracts: [blackwood_road_charter]
+    effects:
+      max_effort_bonus: 1
+    tags: [kit, armory]
+  balanced_blade:
+    id: balanced_blade
+    name: Balanced Blade
+    description: A company-issued blade honed for ugly work in tight rooms.
+    slot: kit
+    cost: 8
+    requires_completed_contracts: [shallow_cave_breach_scout]
+    effects:
+      damage_bonus: 1
+    tags: [kit, armory]
+  sighting_charm:
+    id: sighting_charm
+    name: Sighting Charm
+    description: Chalk, brass, and superstition tied where the hand can find it.
+    slot: kit
+    cost: 8
+    requires_completed_contracts: [shallow_cave_breach_scout]
+    effects:
+      accuracy_bonus: 1
+    tags: [kit, armory]
+  maze_glass_talisman:
+    id: maze_glass_talisman
+    name: Maze-Glass Talisman
+    description: A black shard that reflects the next wrong step before it happens.
+    slot: kit
+    cost:
+    requires_completed_contracts: [shallow_cave_breach_hunt]
+    effects:
+      max_effort_bonus: 1
+      accuracy_bonus: 1
+    tags: [kit, breach_reward, unique]

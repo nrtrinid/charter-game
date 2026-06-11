@@ -1,0 +1,241 @@
+traits:
+  hold_the_line:
+    id: hold_the_line
+    name: Hold the Line
+    type: personal
+    description: A practiced watchman who steadies the lane before fear can find it.
+    positive_text: Starts Guarded in the front row when party Cohesion is Strong.
+    negative_text: Forced movement away from the front should become a future morale risk.
+    tags: [watchman, formation, morale]
+  opportunist:
+    id: opportunist
+    name: Opportunist
+    type: personal
+    description: A rogue who sees profit in every exposed weakness.
+    positive_text: Deals +1 damage against Marked enemies.
+    negative_text: Lootless completed expeditions may sour morale later.
+    tags: [marked, loot, damage]
+  gentle_hands:
+    id: gentle_hands
+    name: Gentle Hands
+    type: personal
+    description: A healer whose care steadies people as much as it closes wounds.
+    positive_text: Treatment and rally actions raise the target's Morale by one step, up to Steady.
+    negative_text: Killing blows should become a future morale risk.
+    tags: [support, morale, healing]
+  grave_calm:
+    id: grave_calm
+    name: Grave-Calm
+    type: personal
+    description: A scribe who has learned to look at impossible things without blinking first.
+    positive_text: Horror and morale-loss effects cannot reduce Morale below Steady.
+    negative_text: This calm may isolate the character in future bond events.
+    tags: [horror, morale, maze]
+  blood_hot:
+    id: blood_hot
+    name: Blood-Hot
+    type: earned
+    description: Surviving violence has taught this hero to ride the rush.
+    positive_text: Restores 1 Effort after killing an enemy.
+    negative_text: Mercy choices should become a future morale risk.
+    tags: [kill, effort]
+  grim_finish:
+    id: grim_finish
+    name: Grim Finish
+    type: earned
+    description: Wounded prey has started to look like certainty, not cruelty.
+    positive_text: Deals +1 damage against enemies at or below half HP.
+    negative_text: Healthy targets offer no extra edge.
+    tags: [kill, damage, finisher]
+  battle_rhythm:
+    id: battle_rhythm
+    name: Battle Rhythm
+    type: earned
+    description: The first kill in a fight teaches this hero where to stand next.
+    positive_text: The first enemy kill each combat grants Guarded.
+    negative_text: Later kills offer no defensive settle.
+    tags: [kill, guard]
+  closer:
+    id: closer
+    name: Closer
+    type: earned
+    description: Ending the fight cleanly has become its own kind of relief.
+    positive_text: Landing the kill that ends combat raises Morale by one step, up to Steady.
+    negative_text: Mid-fight kills offer no comfort.
+    tags: [kill, morale, finisher]
+  no_waste:
+    id: no_waste
+    name: No Waste
+    type: earned
+    description: The hero has learned to finish with the simplest stroke available.
+    positive_text: Once per combat, killing with a basic attack restores 1 Effort.
+    negative_text: Only the first efficient finish pays back.
+    tags: [kill, effort, finisher]
+  steady_hand:
+    id: steady_hand
+    name: Steady Hand
+    type: earned
+    description: Calm killing has become a discipline rather than a reflex.
+    positive_text: Once per combat, killing while Steady or Inspired raises Morale to Inspired.
+    negative_text: Panic offers no such lift.
+    tags: [kill, morale, focus]
+  red_work:
+    id: red_work
+    name: Red Work
+    type: earned
+    description: Violence under pressure has become a way to hold the line together.
+    positive_text: While Shaken or while Cohesion is Fractured, killing raises Morale by one step, up to Steady.
+    negative_text: Calm fights offer no such recovery.
+    tags: [kill, morale, risk]
+  hard_lesson:
+    id: hard_lesson
+    name: Hard Lesson
+    type: earned
+    description: Pain has taught this hero to take something back from the kill.
+    positive_text: While wounded or strained, the first kill each combat restores 1 Morale or 1 Effort.
+    negative_text: Only the first such finish pays back.
+    tags: [kill, survival, morale]
+  maze_sighted:
+    id: maze_sighted
+    name: Maze-Sighted
+    type: earned
+    description: The hero sees the route one heartbeat before the company does.
+    positive_text: Generated Maze routes are one room shorter, not below their profile minimum.
+    negative_text: The Maze should learn this hero's outline later.
+    tags: [maze, route]
+  thread_sense:
+    id: thread_sense
+    name: Thread Sense
+    type: earned
+    description: The hero feels the Maze route pull before the turn is visible.
+    positive_text: Future route-control and scouting systems can surface Maze pressure earlier.
+    negative_text: The Maze may notice repeated reliance on this instinct.
+    tags: [maze, route, scouting]
+  bad_geometry:
+    id: bad_geometry
+    name: Bad Geometry
+    type: earned
+    description: Impossible angles have become a practical warning.
+    positive_text: Future breach events can turn route weirdness into tactical notice.
+    negative_text: Ordinary rooms may feel less trustworthy.
+    tags: [maze, breach, risk]
+  gold_fever:
+    id: gold_fever
+    name: Coin Fever
+    type: earned
+    description: Treasure has become a promise the hero expects the company to keep.
+    positive_text: Loot-positive expeditions raise Morale by one step.
+    negative_text: Completed lootless expeditions lower Morale by one step.
+    tags: [loot, morale]
+  clean_kill:
+    id: clean_kill
+    name: Clean Kill
+    type: earned
+    description: Repeated finishing blows have taught the hero to end a fight without waste.
+    positive_text: Killing a Marked enemy raises Morale by one step, up to Steady.
+    negative_text: Unmarked kills offer no comfort.
+    tags: [kill, marked, focus]
+  predator:
+    id: predator
+    name: Predator
+    type: earned
+    description: Marked enemies have started to look like openings, not people.
+    positive_text: Deals +1 damage against Marked enemies.
+    negative_text: Deals -1 damage against unmarked enemies.
+    tags: [marked, kill, risk]
+  field_medic:
+    id: field_medic
+    name: Field Medic
+    type: earned
+    description: The hero has learned which pressure matters first.
+    positive_text: The first treatment each combat heals +1 HP.
+    negative_text: Later treatment follows the ordinary limits of the kit.
+    tags: [support, healing]
+  steady_voice:
+    id: steady_voice
+    name: Steady Voice
+    type: earned
+    description: The hero's calm turns reassurance into motion.
+    positive_text: Raising another hero's Morale restores 1 Effort to this hero.
+    negative_text: Empty encouragement gives nothing back.
+    tags: [support, morale, effort]
+  desperate_focus:
+    id: desperate_focus
+    name: Desperate Focus
+    type: earned
+    description: Fear has become a sharp and dangerous kind of attention.
+    positive_text: While Shaken, deals +1 damage.
+    negative_text: While Shaken, suffers -1 Defense.
+    tags: [morale, damage, risk]
+  last_anchor:
+    id: last_anchor
+    name: Last Anchor
+    type: earned
+    description: When the line starts to fail, this hero braces first.
+    positive_text: Starts Guarded if party Cohesion is Fractured and this hero is Steady or Inspired.
+    negative_text: Offers nothing when this hero's own nerve has broken.
+    tags: [morale, guard, cohesion]
+  keeps_count:
+    id: keeps_count
+    name: Keeps Count
+    type: earned
+    description: The hero remembers who fell and moves before the count grows.
+    positive_text: The first time an ally is Downed each combat, restores 1 Effort.
+    negative_text: The memory only sharpens once per fight.
+    tags: [downed, ally, effort]
+  loaded_pockets:
+    id: loaded_pockets
+    name: Loaded Pockets
+    type: earned
+    description: The hero has learned where profit hides and how heavy it feels.
+    positive_text: Future loot hooks can improve carry or reward conversion.
+    negative_text: Greed can pull attention from safer choices.
+    tags: [loot, greed]
+  ice_nerves:
+    id: ice_nerves
+    name: Ice Nerves
+    type: earned
+    description: Cold fear has become cold focus.
+    positive_text: Would-be Frozen becomes Marked instead.
+    negative_text: Future fire or panic events may cut deeper.
+    tags: [frozen, tag]
+  winded:
+    id: winded
+    name: Winded
+    type: strain_mark
+    description: The last route is still in the hero's lungs.
+    positive_text: Clears after sitting out or funded recovery.
+    negative_text: Cannot reposition while active.
+    tags: [movement, temporary]
+  drained:
+    id: drained
+    name: Drained
+    type: strain_mark
+    description: The hero spent more than they had to give.
+    positive_text: Clears after sitting out or funded recovery.
+    negative_text: Starts combat with -1 Effort.
+    tags: [effort, temporary]
+  battered:
+    id: battered
+    name: Battered
+    type: strain_mark
+    description: Bruises and cracked ribs make every hit find something tender.
+    positive_text: Clears after sitting out or funded recovery.
+    negative_text: Suffers -1 Defense while active.
+    tags: [defense, temporary]
+  frayed:
+    id: frayed
+    name: Frayed
+    type: strain_mark
+    description: The hero's nerve is coming apart at the edge.
+    positive_text: Clears after sitting out or funded recovery.
+    negative_text: Starts combat one Morale step lower, minimum Shaken.
+    tags: [morale, temporary]
+  spent:
+    id: spent
+    name: Spent
+    type: strain_mark
+    description: Legacy strain mark for old saves; current play uses Spent as the top Strain tier.
+    positive_text: Clears after sitting out or funded recovery.
+    negative_text: Counts as Winded, Drained, and Frayed.
+    tags: [movement, effort, morale, temporary]

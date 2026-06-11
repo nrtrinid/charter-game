@@ -1,0 +1,195 @@
+maze_name: Pandora's Maze
+starting_settlement: haven
+difficulty:
+  id: hard_default
+  name: Hard Default
+  summary: Expeditions are meant to be survivable, not forgiving.
+  principles:
+    - Ordinary recruits can die before they become legends.
+    - Good preparation should improve odds, not guarantee safety.
+    - Retreat and restraint should be valid company decisions.
+    - The Maze pays best when the company is most tempted to overreach.
+locations:
+  haven:
+    id: haven
+    name: Haven Town
+    kind: frontier_settlement
+    act: 1
+    description: A charter town with cheap beds, road contracts, and more debt than glory.
+    tags: [frontier, settlement, charter]
+  old_road:
+    id: old_road
+    name: Old Road
+    kind: overworld_route
+    act: 1
+    description: A neglected trade road where the first company contracts are posted.
+    tags: [overworld, road, contract]
+  blackwood_forest:
+    id: blackwood_forest
+    name: Blackwood Forest
+    kind: overworld_wilds
+    act: 1
+    description: Pines, missing wagons, animal trails, and routes that sometimes repeat.
+    tags: [overworld, forest, maze_leak]
+  shallow_cave:
+    id: shallow_cave
+    name: Shallow Cave
+    kind: overworld_dungeon
+    act: 1
+    description: A local hazard with one wall that has started behaving like a door.
+    tags: [overworld, cave, breach]
+  shallow_cave_breach:
+    id: shallow_cave_breach
+    name: Shallow Cave Breach
+    kind: maze_leak
+    act: 1
+    description: A cold chamber where the company first proves the Maze is not only rumor.
+    tags: [maze, breach, leak]
+  maze_capital:
+    id: maze_capital
+    name: The Deep Gate Market
+    kind: future_city
+    act: 2
+    description: A wealthy town built around the deepest known Maze entrance.
+    tags: [future, settlement, extraction, maze]
+  pandoras_maze_depth_1:
+    id: pandoras_maze_depth_1
+    name: Pandora's Maze Depth 1
+    kind: maze_region
+    act: 2
+    description: The first stable rooms below the exploited frontier.
+    tags: [future, maze]
+contracts:
+  blackwood_road_charter:
+    id: blackwood_road_charter
+    name: Blackwood Road Charter
+    act: 1
+    location_id: old_road
+    expedition_id: opening
+    difficulty: 3
+    reward_reputation: 2
+    coin_reward: 10
+    summary: Reopen the road, clear the cave hazard, and bring back proof worth paying for.
+    available_at_start: true
+    board_order: 0
+    tags: [active, overworld, v0_1]
+  shallow_cave_breach_scout:
+    id: shallow_cave_breach_scout
+    name: Shallow Cave Breach Scout
+    act: 1
+    location_id: shallow_cave_breach
+    expedition_id: opening
+    difficulty: 4
+    reward_reputation: 2
+    coin_reward: 8
+    summary: Step through the Shallow Cave breach, travel the unstable exits at least four rooms deep, complete a survey action, and withdraw with witnesses.
+    board_order: 10
+    posted_after_completed_contracts: [blackwood_road_charter]
+    posted_after_known_breaches: [shallow_cave_breach]
+    generated_maze_pressure_id: long_pressure
+    generated_maze_required_rooms: 4
+    generated_maze_required_action_count: 1
+    tags: [maze, breach, milestone]
+  shallow_cave_breach_hunt:
+    id: shallow_cave_breach_hunt
+    name: Breach Stalker Hunt
+    act: 1
+    location_id: shallow_cave_breach
+    expedition_id: opening
+    difficulty: 5
+    reward_reputation: 4
+    coin_reward: 14
+    reward_gear:
+      maze_glass_talisman: 1
+    summary: Follow a marked Maze route as deep as contract work requires, clear its guardian pressure, kill the marked thing near the breach, and withdraw with proof.
+    board_order: 20
+    posted_after_completed_contracts: [shallow_cave_breach_scout]
+    locked_reason: Complete the breach scout first.
+    generated_maze_pressure_id: marked_hunt
+    generated_maze_required_rooms: 4
+    generated_maze_required_combat_clears: 2
+    generated_maze_requires_hunt: true
+    tags: [maze, breach, hunt]
+  shallow_cave_breach_scout_posting:
+    id: shallow_cave_breach_scout_posting
+    name: Breach Scout Posting
+    act: 1
+    location_id: shallow_cave_breach
+    expedition_id: opening
+    difficulty: 4
+    reward_reputation: 1
+    coin_reward: 5
+    summary: Travel another unstable breach route deep enough to matter, recover fresh Maze-glass from its side passage, and withdraw with witnesses.
+    board_order: 30
+    posted_after_completed_contracts: [shallow_cave_breach_scout]
+    locked_reason: Complete the first breach scout first.
+    generated_maze_pressure_id: breach_probe
+    generated_maze_required_rooms: 3
+    generated_maze_required_loot:
+      maze_glass: 1
+    tags: [maze, breach, scout, repeatable]
+  shallow_cave_breach_hunt_posting:
+    id: shallow_cave_breach_hunt_posting
+    name: Breach Hunt Posting
+    act: 1
+    location_id: shallow_cave_breach
+    expedition_id: opening
+    difficulty: 5
+    reward_reputation: 3
+    coin_reward: 10
+    summary: Take a fresh marked route, travel as deep as the hunt requires, clear its guards, kill the marked thing near the breach, and withdraw with proof.
+    board_order: 40
+    posted_after_completed_contracts: [shallow_cave_breach_hunt]
+    locked_reason: Complete the first breach hunt first.
+    generated_maze_pressure_id: marked_hunt
+    generated_maze_required_rooms: 4
+    generated_maze_required_combat_clears: 2
+    generated_maze_requires_hunt: true
+    tags: [maze, breach, hunt, repeatable]
+  missing_carters:
+    id: missing_carters
+    name: Missing Carters
+    act: 1
+    location_id: blackwood_forest
+    expedition_id: opening
+    difficulty: 4
+    reward_reputation: 3
+    coin_reward: 8
+    summary: Track a missing wagon crew through Blackwood Forest before the repeating road hides the trail.
+    board_order: 50
+    posted_after_completed_contracts: [blackwood_road_charter]
+    posted_after_flags: [cave_relic_filed]
+    locked_reason: File the cave relic with Haven's relic clerk first.
+    tags: [overworld, maze_leak]
+  sealed_mine_survey:
+    id: sealed_mine_survey
+    name: Sealed Mine Survey
+    act: 1
+    location_id: shallow_cave
+    difficulty: 4
+    reward_reputation: 4
+    coin_reward: 10
+    summary: Survey a disputed old mine seal for owners who want extraction rights, not breach glory.
+    tags: [future, overworld, extraction]
+rumors:
+  roads_that_repeat:
+    id: roads_that_repeat
+    title: Past The Dry Creek
+    text: A townsman says the cave is past the dry creek. Look for black stones. Do not follow the birds unless you want wolves.
+    source: Haven east gate
+    act: 1
+    tags: [overworld, maze_leak]
+  caves_count_companies:
+    id: caves_count_companies
+    title: Caves Count Companies
+    text: Someone has been marking how many crews enter the Shallow Cave, and the freshest marks are not miner tallies.
+    source: fungus-lit cave wall
+    act: 1
+    tags: [overworld, cave, warning]
+  maze_profit_invites:
+    id: maze_profit_invites
+    title: Profit Invites The Maze
+    text: Every paid expedition makes the impossible place easier to find again.
+    source: unnamed survivor
+    act: 1
+    tags: [maze, economy, warning]

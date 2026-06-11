@@ -1,0 +1,53 @@
+classes:
+  watchman:
+    id: watchman
+    name: Watchman
+    max_hp: 18
+    speed: 2
+    accuracy: 8
+    defense: 2
+    damage: 2
+    max_effort: 3
+    personal_quirk: hold_the_line
+    skills:
+      - guard_strike
+      - shield_drive
+  cutpurse:
+    id: cutpurse
+    name: Cutpurse
+    max_hp: 13
+    speed: 5
+    accuracy: 10
+    defense: 1
+    damage: 2
+    max_effort: 4
+    personal_quirk: opportunist
+    skills:
+      - knife_work
+      - exposed_cut
+  field_surgeon:
+    id: field_surgeon
+    name: Field Surgeon
+    max_hp: 14
+    speed: 3
+    accuracy: 6
+    defense: 1
+    damage: 1
+    max_effort: 4
+    personal_quirk: gentle_hands
+    skills:
+      - bone_saw
+      - emergency_stitch
+  scribe:
+    id: scribe
+    name: Scribe
+    max_hp: 11
+    speed: 4
+    accuracy: 7
+    defense: 0
+    damage: 1
+    max_effort: 5
+    personal_quirk: grave_calm
+    skills:
+      - staff_jab
+      - abyssal_spark

@@ -1,0 +1,25 @@
+starting:
+  rations: 4
+  bandages: 1
+  rope: 1
+catalog:
+  rations:
+    id: rations
+    name: Rations
+    cost: 1
+    description: Food for the road and the first rooms.
+  bandages:
+    id: bandages
+    name: Bandages
+    cost: 2
+    description: Clean cloth for field treatment.
+  rope:
+    id: rope
+    name: Rope
+    cost: 3
+    description: Useful for cave movement and future hazards.
+  lockpicks:
+    id: lockpicks
+    name: Lockpicks
+    cost: 3
+    description: Small picks for locks that should not need a key.

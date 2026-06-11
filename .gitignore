@@ -1,0 +1,37 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test, lint, and type-check caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local app state
+saves/*.json
+
+# Local scratch and generated lab output
+_wb.py
+ai_lab_*.txt
+project_sources_upload_pack.zip
+RESUME_EVIDENCE_BANK.md
+
+# Editor and OS files
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

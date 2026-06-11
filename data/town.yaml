@@ -1,0 +1,64 @@
+roster_cap: 6
+recruit_offer_count: 3
+recruit_cost: 6
+recovery_cost: 4
+surgery_cost: 9
+services:
+  ledger:
+    id: ledger
+    name: Company Ledger
+    description: Review reputation, breaches, inventory, and charter history.
+  roster:
+    id: roster
+    name: Roster Board
+    description: Review active heroes, reserves, and the memorial.
+  recruitment:
+    id: recruitment
+    name: Recruitment Desk
+    description: Spend Coin to hire new company members.
+  supplies:
+    id: supplies
+    name: Supply Quartermaster
+    description: Spend Coin on expedition supplies.
+  recovery:
+    id: recovery
+    name: Recovery Ward
+    description: Restore HP and Effort, clear Downed, and settle Strain Marks for living heroes.
+  deep_surgery:
+    id: deep_surgery
+    name: Deep Surgery
+    description: Remove one Mortal Wound. Hero sits out the next expedition.
+  formation:
+    id: formation
+    name: Formation Table
+    description: Assign living heroes to the four active party slots.
+  relic_broker:
+    id: relic_broker
+    name: Relic Clerk
+    description: Sell Maze salvage for Coin or file charter proof to open new road work.
+upgrades:
+  quartermaster_shelf:
+    id: quartermaster_shelf
+    name: Quartermaster Shelf
+    description: A dry shelf and better counting lower ration waste before each route.
+    cost: 8
+    requires_completed_contracts: [blackwood_road_charter]
+    effects:
+      supply_cost_deltas:
+        rations: -1
+  recovery_cot:
+    id: recovery_cot
+    name: Recovery Cot
+    description: A dedicated cot lets the ward treat the living with less Coin.
+    cost: 10
+    requires_completed_contracts: [blackwood_road_charter]
+    effects:
+      recovery_cost_delta: -1
+  charter_desk:
+    id: charter_desk
+    name: Charter Desk
+    description: A proper desk and seal let Haven recognize one more company slot.
+    cost: 12
+    requires_completed_contracts: [shallow_cave_breach_scout]
+    effects:
+      roster_cap_bonus: 1
