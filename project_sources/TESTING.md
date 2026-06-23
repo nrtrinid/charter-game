@@ -23,9 +23,10 @@ Date: 2026-06-10
 .\rtk.ps1 all      # full pytest + ruff + mypy
 ```
 
-Current v0.1 release-readiness status: `.\rtk.ps1 test` passes locally
-(`785 passed, 1 skipped` on 2026-06-10). `.\rtk.ps1 lint` and
-`.\rtk.ps1 types` also pass locally.
+Current counts are snapshot-only. As of 2026-06-15, `.\rtk.ps1 quick` passes
+locally (`709 passed`, slow/anyio deselected). Full `.\rtk.ps1 test` was
+`785 passed, 1 skipped` on 2026-06-10. Re-run locally before trusting numbers.
+`.\rtk.ps1 lint` and `.\rtk.ps1 types` also pass locally.
 
 Opening-route integration scripts live in `tests/conftest.py` as
 `OPENING_DUNGEON_TO_WORKS_CACHE` and `OPENING_POST_COMBAT`. Update those tuples

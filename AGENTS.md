@@ -3,6 +3,11 @@
 ## Token-Saving Operating Mode
 
 - Start with this file before broad exploration.
+- Scoped task? Pick the matching block in `docs/AGENT_CONTEXT_MAP.md` before
+  broad reads. For multi-model sessions, start with `.\rtk.ps1 scout --task "..."`
+  and `prompts/agent_workflow.md` (scout → drift → implement).
+- Workspace root is `text-adventure/`; this directory (`dungeon-party-game/`) is
+  the project root. Package name: `charter-game`.
 - Prefer `git diff --name-only`, `rg --files`, and targeted `rg` searches over
   reading whole directories.
 - Read exact files and narrow line ranges when possible; summarize large files
@@ -12,7 +17,8 @@
 - Run focused tests first, such as `uv run pytest tests/test_cli.py -q` or
   `uv run pytest tests/test_cli.py::test_name -q`; run the full suite only for
   broad changes or final verification.
-- On Windows, prefer `.\rtk.ps1 smoke`, `.\rtk.ps1 quick`,
+- On Windows, prefer `.\rtk.ps1 preflight` at session start (or `--verify` /
+  `--boundaries` before handoff), then `.\rtk.ps1 smoke`, `.\rtk.ps1 quick`,
   `.\rtk.ps1 tui`, `.\rtk.ps1 test <path-or-node>`, `.\rtk.ps1 check`,
   and `.\rtk.ps1 all` so commands use the local `.venv` Python 3.13 instead
   of the shell's default Python.
@@ -57,11 +63,43 @@
 - `data`: authored YAML content.
 - `tests`: deterministic rule and vertical-slice tests.
 
+## Dev Tools Index
+
+Dev-only balance and route research. Run from `dungeon-party-game/`:
+
+```bash
+uv run python -m game.dev.ai_lab <subcommand> [options]
+uv run python -m game.dev.train_enemy_ai [options]
+```
+
+| Entry | Purpose | Doc / tests |
+|-------|---------|-------------|
+| `ai_lab policy-band` | Authored/generated route envelope pass-warn-fail bands | `tests/test_policy_band_report.py` |
+| `ai_lab route` | Authored route lab sweep (`--route`, presets, seeds) | `tests/test_route_lab.py` |
+| `ai_lab generated-route` | Generated Maze profile sweep | `tests/test_generated_maze.py` |
+| `ai_lab route-sweep` | Multi-strategy route comparison | `tests/test_route_lab.py` |
+| `ai_lab enemy-packages` | Per-encounter kit health on a route | `tests/test_ai_packages.py` |
+| `ai_lab enemy-sweep` | In-memory counterfactual enemy variants | `tests/test_ai_counterfactuals.py` |
+| `ai_lab discover-tactics` | Counterfactual tactic discovery for a package | `tests/test_ai_tactics.py` |
+| `ai_lab balance-breach-fights` | Breach fight balance lab | `tests/test_breach_balance_lab.py` |
+| `train_enemy_ai` | Train/evaluate enemy decision feature weights | `tests/test_enemy_training_harness.py`, `tests/test_enemy_learning.py` |
+| `agent_preflight` | Git snapshot, task-block guess, verify hints (`.\rtk.ps1 preflight`) | `tests/test_agent_preflight.py` |
+| `agent_preflight --scout` | Stage 1 bundle for cheap scout model (`.\rtk.ps1 scout`) | `tests/test_agent_preflight.py` |
+| `check_engine_boundaries` | Scan engine packages for forbidden `game.ui` imports | `tests/test_agent_preflight.py` |
+
+Supporting modules (`design_diagnosis`, `hero_policy_audit`, `encounter_attribution`,
+`breach_balance_lab`) are libraries consumed by the commands above and their tests —
+not separate CLIs.
+
 ## Commands
 
 Run before considering work complete:
 
 ```bash
+./rtk.ps1 scout --task "one-line task"
+./rtk.ps1 preflight
+./rtk.ps1 preflight --verify
+./rtk.ps1 boundaries
 ./rtk.ps1 all
 uv run pytest
 uv run ruff check
@@ -142,8 +180,39 @@ python -m mypy src
 - 2026-06-05 - Rolling documentation memory should be dated. Update
   `CHANGELOG.md` and durable `AGENTS.md` lessons during the same turn as
   meaningful product, workflow, architecture, tooling, test, or content changes.
+- 2026-06-10 - v0.1.0 is the shipped baseline slice. Treat `CHANGELOG.md`
+  `[0.1.0]` and `project_sources/CURRENT_STATE.md` as release snapshots, not
+  live session truth.
+- 2026-06-06 - Balance and route audits go through `uv run python -m game.dev.ai_lab`
+  (see Dev Tools Index). Start from `docs/dev/` writeups when interpreting sweeps.
+- 2026-06-11 - Generated Maze routing keeps branches cardinally adjacent. Do not
+  reintroduce diagonal or multi-cell room links in previews or seamless extensions.
+- 2026-06-15 - Agent workspace root is `text-adventure/` with a pointer only;
+  all repo work happens in `dungeon-party-game/`. Root `AGENTS.md` and
+  `.cursor/rules/charter-root.mdc` route here.
+- 2026-06-15 - Test policy: `.\rtk.ps1 quick` (~709 tests) for iteration;
+  `.\rtk.ps1 all` for handoff. Refresh stale counts in `CURRENT_STATE.md` /
+  `TESTING.md` with a local run instead of trusting snapshot numbers.
+- 2026-06-15 - Scoped work starts from `docs/AGENT_CONTEXT_MAP.md` (task router)
+  and `prompts/agent_task_prompt_template.md`; skip paths listed in `.agentignore`
+  unless the ticket requires them.
+- 2026-06-15 - Session preflight: `.\rtk.ps1 preflight` guesses task blocks from
+  git changes; `.\rtk.ps1 boundaries` scans engine packages for forbidden
+  `game.ui` imports; `.\rtk.ps1 preflight --verify` runs check plus focused tests.
+- 2026-06-15 - Multi-model workflow: `.\rtk.ps1 scout --task` plus
+  `prompts/agent_workflow.md`, `scout_packet_schema.md`, `drift_check_prompt.md`,
+  and `implement_from_plan.md` (scout → drift gate → implement).
 
 ## Source of Truth
+
+Documentation hierarchy (agent and handoff):
+
+1. `AGENTS.md` — canonical rules, workflow, durable memory, dev-tool index
+2. `docs/AGENT_CONTEXT_MAP.md` — task router (READ_FIRST / VERIFY per ticket type)
+3. `project_sources/` — curated handoff pack; cross-link `AGENTS.md`, do not fork
+   architecture rules into duplicate encyclopedias
+4. `project_sources/CURRENT_STATE.md` — snapshot only; verify test counts and
+   release status with `.\rtk.ps1 quick` or `.\rtk.ps1 all`
 
 Design authority order:
 

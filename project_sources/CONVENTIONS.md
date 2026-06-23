@@ -2,6 +2,9 @@
 
 Date: 2026-06-10
 
+Canonical architecture rules: `AGENTS.md` § Architectural Rules. This file
+summarizes tooling and handoff conventions; do not fork engine/UI boundaries here.
+
 ## Language And Tooling
 
 - Python package using `src/` layout.

@@ -12,6 +12,28 @@ still require explicit user approval.
 
 ## Unreleased
 
+### Added
+
+- 2026-06-15 - Added workspace-root agent pointers (`text-adventure/AGENTS.md`,
+  `README.md`, `.cursor/rules/charter-root.mdc`) so sessions route into
+  `dungeon-party-game/` before exploration.
+- 2026-06-15 - Expanded `AGENTS.md` with documentation hierarchy, dev-tools
+  index, and refreshed durable memory for v0.1, AI lab entry, Maze routing, and
+  test-count policy; cross-linked `project_sources/CONVENTIONS.md` and stale
+  warnings in `CURRENT_STATE.md` / `TESTING.md`.
+- 2026-06-15 - Added agent task router (`docs/AGENT_CONTEXT_MAP.md`),
+  `.agentignore`, and `prompts/agent_task_prompt_template.md`; linked from
+  `AGENTS.md` and `project_sources/00_UPLOAD_INDEX.md`.
+- 2026-06-15 - Added `src/game/dev/agent_preflight.py` and
+  `src/game/dev/check_engine_boundaries.py` with `.\rtk.ps1 preflight` /
+  `.\rtk.ps1 boundaries` for session routing and engine UI-import checks;
+  covered by `tests/test_agent_preflight.py`.
+- 2026-06-15 - Added 3-stage agent workflow (`prompts/agent_workflow.md`,
+  `scout_packet_schema.md`, `drift_check_prompt.md`, `implement_from_plan.md`)
+  and `.\rtk.ps1 scout --task` for cheap scout → smart drift → implement loops.
+- 2026-06-16 - Added repo-local agent routing (`.cursor/rules/project-root.mdc`,
+  `.cursorignore`) and overflow task docs under `docs/agent-tasks/`.
+
 ### Fixed
 
 - 2026-06-11 - Kept generated Maze branches, previews, and seamless forward

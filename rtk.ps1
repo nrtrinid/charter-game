@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("smoke", "quick", "tui", "test", "lint", "types", "check", "all", "setup")]
+    [ValidateSet("smoke", "quick", "tui", "test", "lint", "types", "check", "all", "setup", "preflight", "boundaries", "scout")]
     [string]$Task = "smoke",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -80,5 +80,17 @@ switch ($Task) {
         Invoke-Checked "pytest" $Rest
         Invoke-Checked "ruff" @("check")
         Invoke-Checked "mypy" @("src")
+    }
+    "preflight" {
+        Invoke-PythonModule "game.dev.agent_preflight" $Rest
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+    "boundaries" {
+        Invoke-PythonModule "game.dev.check_engine_boundaries" $Rest
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+    "scout" {
+        Invoke-PythonModule "game.dev.agent_preflight" (@("--scout") + $Rest)
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
 }

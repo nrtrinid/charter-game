@@ -26,6 +26,10 @@ Upload all files in this folder:
 `PROJECT_INSTRUCTIONS.md` is best pasted into the project's instructions field.
 The other files are best uploaded as project sources.
 
+Live session routing (not part of the upload pack): `docs/AGENT_CONTEXT_MAP.md`,
+`prompts/agent_workflow.md`, and `prompts/agent_task_prompt_template.md` in the
+repo root tree under `dungeon-party-game/`.
+
 ## Source Files To Upload If You Want More Code Context
 
 If the project source budget allows selected code, upload these spine files after

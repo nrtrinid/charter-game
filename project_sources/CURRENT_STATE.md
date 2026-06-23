@@ -2,6 +2,11 @@
 
 Date: 2026-06-10
 
+Snapshot as of that date. Stale after 2026-06-10 for test counts and release
+status — run `.\rtk.ps1 quick` for the current quick-suite count (709 passed on
+2026-06-15) or `.\rtk.ps1 all` before handoff. Canonical agent rules live in
+`AGENTS.md`, not this file.
+
 ## Working
 
 - Python package scaffold with src layout, CLI entrypoint, Textual default TUI,

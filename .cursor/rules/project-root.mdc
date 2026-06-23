@@ -1,0 +1,21 @@
+---
+description: Charter repo-local project root and agent routing
+globs:
+alwaysApply: true
+---
+
+# Charter repo-local project root
+
+This repository root is `dungeon-party-game/` (even when the workspace root is different).
+
+## Read order
+
+- `AGENTS.md`
+- `docs/AGENT_CONTEXT_MAP.md`
+- `prompts/agent_workflow.md` (scout -> drift -> implement)
+
+## Verification entrypoints
+
+- `.\rtk.ps1 preflight`
+- `.\rtk.ps1 boundaries`
+- `.\rtk.ps1 quick` / `.\rtk.ps1 all`
