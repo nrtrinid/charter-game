@@ -28,6 +28,10 @@ jobs:
         shell: pwsh
         run: .\rtk.ps1 check
 
+      - name: Run engine boundaries check
+        shell: pwsh
+        run: .\rtk.ps1 boundaries
+
       - name: Run tests
         shell: pwsh
         run: .\rtk.ps1 test

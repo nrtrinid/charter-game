@@ -33,6 +33,10 @@ still require explicit user approval.
   and `.\rtk.ps1 scout --task` for cheap scout → smart drift → implement loops.
 - 2026-06-16 - Added repo-local agent routing (`.cursor/rules/project-root.mdc`,
   `.cursorignore`) and overflow task docs under `docs/agent-tasks/`.
+- 2026-06-16 - Added `.\rtk.ps1 help`, `.\rtk.ps1 review-packet`, cross-platform
+  `rtk.sh`, and `src/game/dev/agent_review_packet.py` for lightweight handoff
+  packets; covered by `tests/test_agent_review_packet.py`.
+- 2026-06-16 - CI runs `.\rtk.ps1 boundaries` after lint/type checks.
 
 ### Fixed
 

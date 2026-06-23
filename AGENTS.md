@@ -86,6 +86,7 @@ uv run python -m game.dev.train_enemy_ai [options]
 | `agent_preflight` | Git snapshot, task-block guess, verify hints (`.\rtk.ps1 preflight`) | `tests/test_agent_preflight.py` |
 | `agent_preflight --scout` | Stage 1 bundle for cheap scout model (`.\rtk.ps1 scout`) | `tests/test_agent_preflight.py` |
 | `check_engine_boundaries` | Scan engine packages for forbidden `game.ui` imports | `tests/test_agent_preflight.py` |
+| `agent_review_packet` | Handoff review packet (`.\rtk.ps1 review-packet`) | `tests/test_agent_review_packet.py` |
 
 Supporting modules (`design_diagnosis`, `hero_policy_audit`, `encounter_attribution`,
 `breach_balance_lab`) are libraries consumed by the commands above and their tests —
@@ -96,15 +97,20 @@ not separate CLIs.
 Run before considering work complete:
 
 ```bash
+./rtk.ps1 help
 ./rtk.ps1 scout --task "one-line task"
 ./rtk.ps1 preflight
 ./rtk.ps1 preflight --verify
 ./rtk.ps1 boundaries
+./rtk.ps1 review-packet
 ./rtk.ps1 all
 uv run pytest
 uv run ruff check
 uv run mypy src
 ```
+
+On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`preflight`, `scout`,
+`boundaries`, `smoke`, `quick`, `test`, `check`, `review-packet`, `help`).
 
 If `uv` is unavailable:
 

@@ -1,5 +1,4 @@
 param(
-    [ValidateSet("smoke", "quick", "tui", "test", "lint", "types", "check", "all", "setup", "preflight", "boundaries", "scout")]
     [string]$Task = "smoke",
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -41,7 +40,40 @@ function Invoke-Checked {
     }
 }
 
+function Show-Help {
+    Write-Output "rtk.ps1 - Charter repo toolkit"
+    Write-Output ""
+    Write-Output "Usage:"
+    Write-Output "  .\rtk.ps1 <task> [args]"
+    Write-Output "  .\rtk.ps1 -Task <task> [args]"
+    Write-Output ""
+    Write-Output "Tasks:"
+    Write-Output "  help           Show this help"
+    Write-Output "  setup          Create .venv and install -e .[dev]"
+    Write-Output "  smoke          Run minimal smoke tests"
+    Write-Output "  quick          Run fast pytest subset (-m 'not anyio and not slow')"
+    Write-Output "  tui            Run Textual test slice"
+    Write-Output "  test [args]    Run pytest (args forwarded)"
+    Write-Output "  lint [args]    Run ruff check"
+    Write-Output "  types [args]   Run mypy (default: src)"
+    Write-Output "  check          Run ruff check + mypy src"
+    Write-Output "  all [args]     Run pytest + ruff check + mypy src"
+    Write-Output "  preflight      Agent preflight report"
+    Write-Output "  scout [args]   Preflight scout bundle (--scout)"
+    Write-Output "  boundaries     Fail if engine packages import game.ui"
+    Write-Output "  review-packet  Print lightweight review packet (Markdown)"
+    Write-Output ""
+    Write-Output "Examples:"
+    Write-Output '  .\rtk.ps1 preflight'
+    Write-Output '  .\rtk.ps1 scout --task "One-line task"'
+    Write-Output '  .\rtk.ps1 boundaries'
+    Write-Output '  .\rtk.ps1 review-packet'
+}
+
 switch ($Task) {
+    "help" {
+        Show-Help
+    }
     "setup" {
         if (-not (Test-Path $VenvPython)) {
             & py -3.13 -m venv (Join-Path $ProjectRoot ".venv")
@@ -92,5 +124,14 @@ switch ($Task) {
     "scout" {
         Invoke-PythonModule "game.dev.agent_preflight" (@("--scout") + $Rest)
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+    "review-packet" {
+        Invoke-PythonModule "game.dev.agent_review_packet" $Rest
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+    default {
+        Write-Error "Unknown task: $Task"
+        Show-Help
+        exit 2
     }
 }
