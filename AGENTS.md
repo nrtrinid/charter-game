@@ -215,9 +215,11 @@ Documentation hierarchy (agent and handoff):
 
 1. `AGENTS.md` — canonical rules, workflow, durable memory, dev-tool index
 2. `docs/AGENT_CONTEXT_MAP.md` — task router (READ_FIRST / VERIFY per ticket type)
-3. `project_sources/` — curated handoff pack; cross-link `AGENTS.md`, do not fork
+3. `docs/STANDARDIZED_AGENT_ERGONOMICS_ROADMAP.md` — cross-repo ergonomics phases
+   and acceptance criteria (Charter Phase 1 complete)
+4. `project_sources/` — curated handoff pack; cross-link `AGENTS.md`, do not fork
    architecture rules into duplicate encyclopedias
-4. `project_sources/CURRENT_STATE.md` — snapshot only; verify test counts and
+5. `project_sources/CURRENT_STATE.md` — snapshot only; verify test counts and
    release status with `.\rtk.ps1 quick` or `.\rtk.ps1 all`
 
 Design authority order:

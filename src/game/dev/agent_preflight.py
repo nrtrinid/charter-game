@@ -87,6 +87,28 @@ def run_git(project_root: Path, *args: str) -> str | None:
     return completed.stdout.strip()
 
 
+def parse_status_path(line: str) -> str | None:
+    """Parse one `git status --porcelain` line into a repo-relative path.
+
+    Do not strip the full line before slicing: ``line.strip()[3:]`` would turn
+    `` M src/...`` into ``rc/...``.
+    """
+    if not line or not line.strip():
+        return None
+    if line.startswith("??"):
+        path = line[3:]
+    elif len(line) >= 4 and line[2] == " ":
+        path = line[3:]
+    elif len(line) >= 3:
+        path = line[2:].lstrip()
+    else:
+        return None
+    path = path.strip().strip('"')
+    if " -> " in path:
+        path = path.split(" -> ", 1)[1].strip().strip('"')
+    return normalize_path(path)
+
+
 def collect_git_snapshot(project_root: Path) -> GitSnapshot | None:
     branch = run_git(project_root, "rev-parse", "--abbrev-ref", "HEAD")
     status = run_git(project_root, "status", "--porcelain")
@@ -94,12 +116,9 @@ def collect_git_snapshot(project_root: Path) -> GitSnapshot | None:
         return None
     changed: list[str] = []
     for line in status.splitlines():
-        if not line.strip():
-            continue
-        path = line[3:].strip().strip('"')
-        if " -> " in path:
-            path = path.split(" -> ", 1)[1].strip().strip('"')
-        changed.append(path.replace("\\", "/"))
+        path = parse_status_path(line)
+        if path:
+            changed.append(path)
     return GitSnapshot(branch=branch, changed_paths=tuple(changed))
 
 

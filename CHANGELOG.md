@@ -37,9 +37,15 @@ still require explicit user approval.
   `rtk.sh`, and `src/game/dev/agent_review_packet.py` for lightweight handoff
   packets; covered by `tests/test_agent_review_packet.py`.
 - 2026-06-16 - CI runs `.\rtk.ps1 boundaries` after lint/type checks.
+- 2026-06-23 - Added `docs/STANDARDIZED_AGENT_ERGONOMICS_ROADMAP.md` (cross-repo
+  ergonomics contract); linked from `AGENTS.md`; Phase 1 marked complete.
 
 ### Fixed
 
+- 2026-06-23 - Re-encoded `.agentignore` to UTF-8 (no NUL noise in shell tools).
+- 2026-06-23 - Preflight porcelain path parsing via `parse_status_path` so modified
+  paths under `src/` are not misread as `rc/...`; regression tests in
+  `tests/test_agent_preflight.py`.
 - 2026-06-11 - Kept generated Maze branches, previews, and seamless forward
   extensions cardinally adjacent so routes no longer create diagonal or
   multi-cell room links.

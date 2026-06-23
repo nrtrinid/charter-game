@@ -8,6 +8,7 @@ from game.dev.agent_preflight import (
     ReportContext,
     classify_path,
     collect_report_context,
+    parse_status_path,
     print_scout_bundle,
     suggest_tests,
 )
@@ -16,6 +17,26 @@ from game.dev.check_engine_boundaries import find_ui_import_violations
 
 def test_classify_combat_path() -> None:
     assert "combat-rules" in classify_path("src/game/combat/targeting.py")
+
+
+def test_parse_status_path_modified_src_file() -> None:
+    assert parse_status_path(" M src/game/combat/targeting.py") == (
+        "src/game/combat/targeting.py"
+    )
+
+
+def test_parse_status_path_untracked() -> None:
+    assert parse_status_path("?? prompts/foo.md") == "prompts/foo.md"
+
+
+def test_parse_status_path_rename() -> None:
+    assert parse_status_path('R  old.py -> new.py') == "new.py"
+
+
+def test_parse_status_path_strip_regression() -> None:
+    line = " M src/game/combat/targeting.py"
+    assert parse_status_path(line) == "src/game/combat/targeting.py"
+    assert line.strip()[3:] == "rc/game/combat/targeting.py"
 
 
 def test_classify_town_yaml_prefers_campaign_and_content() -> None:
