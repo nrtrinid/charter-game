@@ -175,3 +175,103 @@ def test_route_envelope_doomed_boss_entry_fails() -> None:
 
     assert score.status == "FAIL"
     assert "party reaches boss already doomed" in score.warnings
+
+
+def test_route_envelope_bimodal_collapse_fail_severe() -> None:
+    score = score_route_envelope(
+        RoutePressureSummary(
+            route_count=50,
+            completed_count=12,
+            failed_at_counts={"maze_depth_1": 20, "road_bandits": 18},
+            average_reward=0,
+            average_final_hero_hp=6.0,
+            average_final_hero_effort=1,
+            average_downs=0,
+            average_deaths=0,
+            average_mortal_wounds=0,
+            average_hp_entering_cave_mini_boss=35.4,
+            average_hp_leaving_cave_mini_boss=0,
+        ),
+        envelope_id="optional_pressure_path",
+    )
+
+    assert score.status == "FAIL"
+    assert any(
+        warning.startswith("route_bimodal_collapse:")
+        for warning in score.warnings
+    )
+    assert any("noncompletion 38/50" in warning for warning in score.warnings)
+    assert "party reaches boss too healthy" not in score.warnings
+
+
+def test_route_envelope_bimodal_collapse_warn_moderate() -> None:
+    score = score_route_envelope(
+        RoutePressureSummary(
+            route_count=10,
+            completed_count=7,
+            failed_at_counts={"wolf_pack": 3},
+            average_reward=0,
+            average_final_hero_hp=8.0,
+            average_final_hero_effort=1,
+            average_downs=0,
+            average_deaths=0,
+            average_mortal_wounds=0,
+            average_hp_entering_cave_mini_boss=30.0,
+            average_hp_leaving_cave_mini_boss=0,
+        ),
+        envelope_id="optional_pressure_path",
+    )
+
+    assert score.status == "WARN"
+    assert any(
+        warning.startswith("route_bimodal_collapse:")
+        for warning in score.warnings
+    )
+    assert score.status != "FAIL"
+
+
+def test_route_envelope_boss_healthy_without_bimodal() -> None:
+    score = score_route_envelope(
+        RoutePressureSummary(
+            route_count=10,
+            completed_count=10,
+            failed_at_counts={},
+            average_reward=0,
+            average_final_hero_hp=20.0,
+            average_final_hero_effort=2,
+            average_downs=0,
+            average_deaths=0,
+            average_mortal_wounds=0,
+            average_hp_entering_cave_mini_boss=35.0,
+            average_hp_leaving_cave_mini_boss=10,
+        ),
+        envelope_id="critical_path",
+    )
+
+    assert "party reaches boss too healthy" in score.warnings
+    assert not any(
+        warning.startswith("route_bimodal_collapse:")
+        for warning in score.warnings
+    )
+
+
+def test_route_envelope_healthy_critical_path_no_bimodal() -> None:
+    score = score_route_envelope(
+        RoutePressureSummary(
+            route_count=10,
+            completed_count=8,
+            failed_at_counts={},
+            average_reward=0,
+            average_final_hero_hp=12,
+            average_final_hero_effort=2,
+            average_downs=0,
+            average_deaths=0,
+            average_mortal_wounds=0,
+            average_hp_entering_cave_mini_boss=16,
+            average_hp_leaving_cave_mini_boss=8,
+        ),
+        envelope_id="critical_path",
+    )
+
+    assert score.status == "PASS"
+    assert score.warnings == ()

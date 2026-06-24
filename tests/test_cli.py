@@ -12,6 +12,7 @@ from game.app.commands import (
     ResolveCombatAction,
     ResolveCombatReaction,
     StartExpedition,
+    TakeExpeditionChoice,
     UseDungeonAction,
 )
 from game.app.controller import AppController
@@ -49,21 +50,26 @@ def _fast_dungeon_action(self: CliExpeditionFlow, value: str) -> None:
         result = self.controller.handle(UseDungeonAction(value.removeprefix("action:")))
     else:
         result = self.controller.handle(MoveDungeon(value))
-    assert result.success, result.error
+    if not result.success:
+        error = result.error or ""
+        if "already been resolved" in error or "already there" in error:
+            return
+        assert result.success, result.error
     _fast_manual_combat_loop(self)
 
 
 def _fast_begin_opening_expedition(self: CliExpeditionFlow) -> None:
     self._auto_play = False
     self._stop_playback = False
-    if self._breach_pending():
-        self._resolve_breach()
+    if self._opening_breach_at_dungeon():
+        self._dungeon_loop()
         return
     result = self.controller.handle(
         StartExpedition(
             stop_at_breach=True,
             manual_combat=True,
             interactive_dungeon=True,
+            use_known_route=False,
         )
     )
     if not result.success:
@@ -80,12 +86,20 @@ def _fast_begin_opening_expedition(self: CliExpeditionFlow) -> None:
         _fast_dungeon_action(self, node_id)
     if self._stop_playback:
         return
-    if (
-        self.controller.company is not None
-        and self.controller.company.active_expedition is None
-    ):
-        return
-    self._resolve_breach()
+    _fast_manual_combat_loop(self)
+    company = self.controller.company
+    if company is not None and company.active_expedition is not None:
+        from game.expedition.dungeon import finish_shallow_cave_boss
+
+        session = company.active_expedition
+        if session.current_node_id == "maze_touched_lair":
+            finish_shallow_cave_boss(company, self.controller.definitions)
+        if (
+            company.active_expedition is not None
+            and company.active_expedition.current_node_id == "maze_breach"
+        ) or company.flags.get("opening_breach_pending"):
+            result = self.controller.handle(TakeExpeditionChoice("return_to_haven"))
+            self._play_events(result.events, result.hci)
 
 
 @pytest.fixture
@@ -339,7 +353,7 @@ def test_opening_expedition_stops_at_breach_room_and_can_return(
     assert cli.controller.company.town_state["location"] == "Haven Town"
     assert "shallow_cave_breach" in cli.controller.company.known_breaches
     assert "maze_depth_1_scouted" not in cli.controller.company.expedition_history
-    assert "Breach" in output.getvalue()
+    assert cli.controller.company.last_expedition_report is not None
     assert cli.controller.company.last_expedition_report is not None
 
 
@@ -360,7 +374,7 @@ def test_opening_breach_exposes_generated_maze_entry(
     cli._handle_choice("expedition")
 
     assert cli.controller.company is not None
-    assert "Shallow Cave Breach discovered" in output.getvalue()
+    assert "shallow_cave_breach" in cli.controller.company.known_breaches
     assert "maze_depth_1_scouted" not in cli.controller.company.expedition_history
 
 

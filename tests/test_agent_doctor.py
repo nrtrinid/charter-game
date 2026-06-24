@@ -4,7 +4,8 @@ import io
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from game.dev.agent_doctor import collect_freshness_findings, main as doctor_main
+from game.dev.agent_doctor import collect_freshness_findings
+from game.dev.agent_doctor import main as doctor_main
 
 
 def test_doc_link_missing(tmp_path: Path) -> None:

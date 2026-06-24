@@ -35,6 +35,7 @@ from game.app.commands import (
     RetreatCombat,
     RetreatGeneratedMaze,
     ReturnFromDungeon,
+    ReturnToHavenTown,
     SelectTarget,
     SellLoot,
     StartExpedition,
@@ -58,6 +59,7 @@ from game.app.commands import (
     ViewSupplies,
     ViewTown,
     ViewWorld,
+    VisitEastGate,
     WithdrawGeneratedMaze,
 )
 from game.app.contracts import contract_unavailable_reason
@@ -125,6 +127,7 @@ from game.expedition.dungeon import (
     generated_maze_frontier_exit_ids,
     mark_pending_combat_cleared,
     move_generated_maze_if_needed,
+    open_opening_breach_room,
     record_events,
     retrace_generated_maze,
     return_from_dungeon,
@@ -143,6 +146,7 @@ from game.expedition.expedition import (
 from game.expedition.travel import (
     REGIONAL_CHARTED_HOP_IDS,
     REGIONAL_CHARTED_HOP_NODE_BY_WORLD_ID,
+    REGIONAL_EAST_GATE_NODE_ID,
     REGIONAL_OVERWORLD_NODE_IDS,
     apply_node_rewards,
     event_for_node,
@@ -322,6 +326,10 @@ class TownFlow(ControllerFlow):
             return self._use_regional_action(command.action_id)
         if isinstance(command, MarkRegionalRoute):
             return self._mark_regional_route()
+        if isinstance(command, VisitEastGate):
+            return self._visit_east_gate()
+        if isinstance(command, ReturnToHavenTown):
+            return self._return_to_haven_town()
         if isinstance(command, ViewMemorial):
             return self._require_company(
                 lambda company: Result.ok(
@@ -689,6 +697,31 @@ class TownFlow(ControllerFlow):
             )
 
         return self._require_company(mark_route)
+
+    def _visit_east_gate(self) -> Result[Any]:
+        def visit(company: CompanyState) -> Result[Any]:
+            if company.active_expedition is not None:
+                return Result.fail("Finish the active expedition first.")
+            nodes = regional_overworld_nodes(self.definitions)
+            node = nodes[REGIONAL_EAST_GATE_NODE_ID]
+            set_regional_node_id(company, REGIONAL_EAST_GATE_NODE_ID)
+            set_company_node_location(company, node)
+            return Result.ok(
+                build_regional_map_view(company, self.definitions),
+                [CompanyEvent(message="The company steps out to East Gate.")],
+            )
+
+        return self._require_company(visit)
+
+    def _return_to_haven_town(self) -> Result[Any]:
+        def return_town(company: CompanyState) -> Result[Any]:
+            set_company_location(company, "haven", "Haven Town")
+            return Result.ok(
+                build_town_dashboard(company, self.definitions),
+                [CompanyEvent(message="Returned to Haven Town.")],
+            )
+
+        return self._require_company(return_town)
 
 
 @dataclass
@@ -1528,10 +1561,7 @@ class ManualCombatFlow(ControllerFlow):
         nodes = opening_nodes(self.definitions)
         events: list[GameEvent] = [event_for_node(nodes["cave_mini_boss"])]
         events.extend(apply_node_rewards(self.company, nodes["cave_mini_boss"], self.definitions))
-        events.append(event_for_node(nodes["maze_breach"]))
-        events.extend(apply_node_rewards(self.company, nodes["maze_breach"], self.definitions))
-        self.company.flags[OPENING_BREACH_PENDING_FLAG] = True
-        set_company_node_location(self.company, nodes["maze_breach"])
+        events.extend(open_opening_breach_room(self.company, self.definitions))
         self.manual_combat = None
         self.opening_manual_stage = None
         return events

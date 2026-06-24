@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any
 
@@ -64,6 +64,7 @@ class ScreenAction:
     preview: str = ""
     result_hint: str = ""
     confirm: str = ""
+    route_warning: bool = False
 
 
 class ActionProvider:
@@ -767,6 +768,7 @@ class ActionProvider:
         unstable_frontier_exit_ids: tuple[str, ...] = (),
         previous_node_id: str = "",
         current_node_id: str = "",
+        opening_breach_at_breach: bool = False,
     ) -> tuple[ScreenAction, ...]:
         actions: list[ScreenAction] = []
         for action_view in room_actions:
@@ -786,6 +788,47 @@ class ActionProvider:
                     result_hint=room_action_result_hint(action_view),
                 )
             )
+        if opening_breach_at_breach:
+            actions.append(
+                ScreenAction(
+                    str(len(actions) + 1),
+                    "Return to Haven",
+                    "return_to_haven",
+                    ("r",),
+                    default=True,
+                    kind=ScreenActionKind.TRAVEL,
+                    risk=ScreenActionRisk.LOW,
+                    preview="Report the breach and bring the company back to Haven.",
+                    result_hint="Ends the expedition with proof and survivors.",
+                )
+            )
+            actions.append(
+                ScreenAction(
+                    str(len(actions) + 1),
+                    "Descend to Maze Depth 1",
+                    "descend_maze_depth_1",
+                    ("d",),
+                    kind=ScreenActionKind.TRAVEL,
+                    risk=ScreenActionRisk.RISKY,
+                    preview="Push beyond the cave into the first impossible rooms.",
+                    result_hint="Requires confirmation before the company descends.",
+                    confirm="Descend into Maze Depth 1?",
+                )
+            )
+            actions.append(
+                ScreenAction(
+                    str(len(actions) + 1),
+                    "Back",
+                    "back",
+                    ("b",),
+                    enabled=False,
+                    description="Resolve Return or Descend before leaving this breach.",
+                    kind=ScreenActionKind.NAVIGATE,
+                    unavailable_reason="Choose Return to Haven or Descend to Maze Depth 1.",
+                    preview="The breach decision must be resolved from this room.",
+                )
+            )
+            return tuple(actions)
         for exit_view in exits:
             unstable = str(exit_view.node_id) in unstable_frontier_exit_ids
             detail = route_action_description(exit_view, current_map_id=current_map_id)
@@ -826,6 +869,7 @@ class ActionProvider:
                             previous_node_id=previous_node_id,
                         )
                     ),
+                    route_warning=route_action_warns_player(exit_view),
                 )
             )
         if can_enter_generated_maze:
@@ -977,7 +1021,9 @@ class ActionProvider:
         view: Any,
         *,
         start_index: int = 1,
+        exits: tuple[Any, ...] | None = None,
     ) -> tuple[ScreenAction, ...]:
+        exit_views = view.exits if exits is None else exits
         return tuple(
             ScreenAction(
                 str(start_index + index),
@@ -990,26 +1036,111 @@ class ActionProvider:
                     "No ration cost.",
                 ),
                 result_hint="Arrives at the linked wilderness place.",
-                default=index == 0,
+                default=index == 0 and start_index == 1,
+                route_warning=route_action_warns_player(exit_view),
             )
-            for index, exit_view in enumerate(view.exits)
+            for index, exit_view in enumerate(exit_views)
+        )
+
+    @staticmethod
+    def _regional_charted_hop_action(
+        view: Any,
+        *,
+        index: int,
+        default: bool,
+    ) -> ScreenAction | None:
+        if view.anchor_kind not in {"east_gate", "shallow_cave"}:
+            return None
+        if not view.route_charted or not view.travel_available:
+            return None
+        hop_label = (
+            f"Take Charted Road to {view.other_node_name}"
+            if view.anchor_kind == "east_gate"
+            else "Take Charted Road to East Gate"
+        )
+        destination_name = (
+            view.other_node_name if view.anchor_kind == "east_gate" else "East Gate"
+        )
+        return ScreenAction(
+            str(index),
+            hop_label,
+            view.other_node_id,
+            ("c", "cave") if view.anchor_kind == "east_gate" else ("h", "haven"),
+            default=default,
+            kind=ScreenActionKind.TRAVEL,
+            risk=ScreenActionRisk.LOW,
+            cost=view.travel_cost,
+            preview=join_detail(
+                f"Destination: {destination_name}.",
+                "Route: charted road.",
+                f"Cost: {view.travel_cost}.",
+            ),
+            result_hint=join_detail(
+                (
+                    "Arrive at Shallow Cave."
+                    if view.anchor_kind == "east_gate"
+                    else "Arrive at East Gate."
+                ),
+                "Skips cleared Old Road beats.",
+                "No new discoveries on this route.",
+            ),
         )
 
     @staticmethod
     def regional_place_actions(view: Any) -> tuple[ScreenAction, ...]:
         actions: list[ScreenAction] = []
-        if view.anchor_kind == "east_gate" and not view.route_charted:
+        if view.anchor_kind == "east_gate":
+            charted_hop = ActionProvider._regional_charted_hop_action(
+                view,
+                index=1,
+                default=True,
+            )
+            if charted_hop is not None:
+                actions.append(charted_hop)
             actions.append(
                 ScreenAction(
-                    "1",
+                    str(len(actions) + 1),
                     "Leave by Old Road",
                     "old_road",
                     ("r", "road"),
-                    default=True,
+                    default=charted_hop is None,
                     kind=ScreenActionKind.TRAVEL,
                     risk=ScreenActionRisk.LOW,
-                    preview="Walk the uncharted road toward Shallow Cave.",
-                    result_hint="Starts the opening expedition from East Gate.",
+                    preview=(
+                        join_detail("Walk the Old Road.", "No ration cost.")
+                        if view.route_charted
+                        else "Walk the uncharted road toward Shallow Cave."
+                    ),
+                    result_hint=(
+                        "Arrives at the linked wilderness place."
+                        if view.route_charted
+                        else "Starts the opening expedition from East Gate."
+                    ),
+                )
+            )
+            other_exits = tuple(
+                exit_view for exit_view in view.exits if exit_view.node_id != "old_road"
+            )
+            if other_exits:
+                actions.extend(
+                    ActionProvider._regional_walk_place_actions(
+                        view,
+                        start_index=len(actions) + 1,
+                        exits=other_exits,
+                    )
+                )
+        elif view.anchor_kind == "shallow_cave":
+            charted_hop = ActionProvider._regional_charted_hop_action(
+                view,
+                index=1,
+                default=False,
+            )
+            if charted_hop is not None:
+                actions.append(charted_hop)
+            actions.extend(
+                ActionProvider._regional_walk_place_actions(
+                    view,
+                    start_index=len(actions) + 1,
                 )
             )
         else:
@@ -1023,7 +1154,11 @@ class ActionProvider:
                     ("m",),
                     kind=ScreenActionKind.INSPECT,
                     preview="Unroll the company roadbook and zoom out to charted routes.",
-                    result_hint="Opens charted fast travel when the cave route is known.",
+                    result_hint=(
+                        "Opens charted fast travel between East Gate and Shallow Cave."
+                        if view.route_charted
+                        else "Opens charted fast travel when the cave route is known."
+                    ),
                 )
             )
             actions.append(
@@ -1067,17 +1202,6 @@ class ActionProvider:
                         result_hint="Shows charted fast travel back to East Gate.",
                     )
                 )
-            else:
-                actions.append(
-                    ScreenAction(
-                        str(len(actions) + 1),
-                        "Mark Route",
-                        "mark_route",
-                        kind=ScreenActionKind.DUNGEON,
-                        preview="Chart the cave mouth on the company map.",
-                        result_hint="Unlocks survey map and fast travel back to East Gate.",
-                    )
-                )
         else:
             available_room_actions = [
                 room_action
@@ -1103,49 +1227,34 @@ class ActionProvider:
                         ),
                     )
                 )
+        if view.arrival_context is not None:
+            renumbered: list[ScreenAction] = [
+                ScreenAction(
+                    "1",
+                    "Read Filed Record",
+                    "latest_record",
+                    ("record", "report"),
+                    default=True,
+                    kind=ScreenActionKind.INSPECT,
+                    preview="Open the latest filed company record.",
+                    result_hint="Review what changed during the expedition.",
+                )
+            ]
+            for index, action in enumerate(actions, start=2):
+                renumbered.append(
+                    replace(action, number=str(index), default=False)
+                )
+            return tuple(renumbered)
         return tuple(actions)
 
     @staticmethod
     def regional_map_travel_actions(view: Any) -> tuple[ScreenAction, ...]:
         if view.anchor_kind not in {"east_gate", "shallow_cave"}:
             return ActionProvider._regional_walk_place_actions(view)
-        if not view.travel_available:
+        hop = ActionProvider._regional_charted_hop_action(view, index=1, default=True)
+        if hop is None:
             return ()
-        hop_label = (
-            f"Take Charted Road to {view.other_node_name}"
-            if view.anchor_kind == "east_gate"
-            else "Take Charted Road to East Gate"
-        )
-        destination_name = (
-            view.other_node_name if view.anchor_kind == "east_gate" else "East Gate"
-        )
-        return (
-            ScreenAction(
-                "1",
-                hop_label,
-                view.other_node_id,
-                ("c", "cave") if view.anchor_kind == "east_gate" else ("h", "haven"),
-                default=True,
-                kind=ScreenActionKind.TRAVEL,
-                risk=ScreenActionRisk.LOW,
-                cost=view.travel_cost,
-                preview=join_detail(
-                    f"Destination: {destination_name}.",
-                    "Route: charted road.",
-                    f"Cost: {view.travel_cost}.",
-                    "Risk: Low.",
-                ),
-                result_hint=join_detail(
-                    (
-                        "Arrive at Shallow Cave."
-                        if view.anchor_kind == "east_gate"
-                        else "Arrive at East Gate."
-                    ),
-                    "Skips cleared Old Road beats.",
-                    "No new discoveries on this route.",
-                ),
-            ),
-        )
+        return (hop,)
 
     @staticmethod
     def regional_map_actions(view: Any) -> tuple[ScreenAction, ...]:
@@ -1208,7 +1317,7 @@ def _travel_destination_label(view: Any, destination: Any) -> str:
 
 
 def route_action_description(exit_view: Any, *, current_map_id: str) -> str:
-    state = "known" if exit_view.visited else "unexplored"
+    cleared = bool(getattr(exit_view, "cleared", False))
     warnings = {
         "combat": "danger likely",
         "hazard": "hazard likely",
@@ -1217,12 +1326,12 @@ def route_action_description(exit_view: Any, *, current_map_id: str) -> str:
         "maze": "expedition risk",
     }
     direction = getattr(exit_view, "direction", "")
-    pieces = [f"direction {direction.lower()}" if direction else "", state]
+    pieces = [f"direction {direction.lower()}" if direction else ""]
     pieces.append(str(exit_view.node_type).replace("_", " "))
     if exit_view.map_id != current_map_id:
         pieces.append(f"enter {str(exit_view.map_id).replace('_', ' ')}")
     warning = warnings.get(str(exit_view.node_type))
-    if warning is not None:
+    if warning is not None and not cleared:
         pieces.append(warning)
     if exit_view.safe_return:
         pieces.append("safe return")
@@ -1250,19 +1359,31 @@ def route_action_preview(
 
 def route_action_result_hint(exit_view: Any, *, previous_node_id: str = "") -> str:
     hints = [f"Enter {exit_view.name}."]
-    if not exit_view.visited:
-        hints.append("Unexplored room: expect new danger or discoveries.")
     if exit_view.safe_return:
         hints.append("This room can return the company to Haven.")
     return join_detail(*hints)
 
 
 def dungeon_route_risk(exit_view: Any) -> ScreenActionRisk:
+    if bool(getattr(exit_view, "cleared", False)):
+        return ScreenActionRisk.LOW
     if exit_view.node_type in {"boss", "maze", "breach"}:
         return ScreenActionRisk.RISKY
     if exit_view.node_type in {"combat", "hazard"}:
         return ScreenActionRisk.COSTLY
     return ScreenActionRisk.LOW
+
+
+def route_action_warns_player(exit_view: Any) -> bool:
+    if bool(getattr(exit_view, "cleared", False)):
+        return False
+    return str(getattr(exit_view, "node_type", "")) in {
+        "boss",
+        "combat",
+        "hazard",
+        "breach",
+        "maze",
+    }
 
 
 def room_action_description(action: Any) -> str:

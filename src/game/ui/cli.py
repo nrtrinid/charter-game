@@ -1298,11 +1298,13 @@ class Cli:
         )
         return self._ask_action(actions, prompt=prompt)
 
-    def _breach_pending(self) -> bool:
+    def _opening_breach_at_dungeon(self) -> bool:
+        company = self.controller.company
+        if company is None or company.active_expedition is None:
+            return False
         return bool(
-            self.controller.company is not None
-            and self.controller.company.active_expedition is None
-            and self.controller.company.flags.get(BREACH_PENDING_FLAG, False)
+            company.flags.get(BREACH_PENDING_FLAG, False)
+            and company.active_expedition.current_node_id == "maze_breach"
         )
 
     def _use_soft_regions(self) -> bool:
@@ -1336,8 +1338,8 @@ class CliExpeditionFlow:
         while not self.controller.should_quit:
             self._show_screen(
                 "Expedition",
-                "A discovered breach is waiting."
-                if self._breach_pending()
+                "The breach is open in the dungeon."
+                if self._opening_breach_at_dungeon()
                 else "The opening route is ready.",
                 command_dock=_command_dock_from_choices(
                     EXPEDITION_CHOICES,
@@ -1360,8 +1362,8 @@ class CliExpeditionFlow:
     def _begin_opening_expedition(self) -> None:
         self._auto_play = False
         self._stop_playback = False
-        if self._breach_pending():
-            self._resolve_breach()
+        if self._opening_breach_at_dungeon():
+            self._dungeon_loop()
             return
         result = self.controller.handle(
             StartExpedition(
@@ -1383,12 +1385,6 @@ class CliExpeditionFlow:
         self._dungeon_loop()
         if self._stop_playback:
             return
-        if (
-            self.controller.company is not None
-            and self.controller.company.active_expedition is None
-        ):
-            return
-        self._resolve_breach()
 
     def _show_regional_map(self, view: RegionalMapView) -> None:
         self._show_screen("Company Roadbook", _regional_map_text(view))
@@ -1415,7 +1411,6 @@ class CliExpeditionFlow:
         while (
             self.controller.company is not None
             and self.controller.company.active_expedition is not None
-            and not self._breach_pending()
             and not self._stop_playback
         ):
             view_result = self.controller.handle(ViewDungeon())
@@ -1464,6 +1459,64 @@ class CliExpeditionFlow:
                         render_expedition_report(result.value),
                     )
                     self._pause()
+                return
+            if action == "return_to_haven":
+                result = self.controller.handle(TakeExpeditionChoice("return_to_haven"))
+                self._play_events(result.events, result.hci)
+                if not result.success:
+                    self._show_screen(
+                        "Expedition",
+                        render_notice(result.error or "Return failed.", style="red"),
+                    )
+                    self._pause()
+                else:
+                    report_result = self.controller.handle(ViewExpeditionReport())
+                    if report_result.success and isinstance(
+                        report_result.value,
+                        ExpeditionReportView,
+                    ):
+                        self._show_screen(
+                            "Filed Company Record",
+                            render_expedition_report(report_result.value),
+                        )
+                        self._pause()
+                return
+            if action == "descend_maze_depth_1":
+                if (
+                    self._ask_confirmation(
+                        "Confirm Descent",
+                        "The Maze descent is risky and cannot be undone this expedition.",
+                        prompt="Descent",
+                        confirm_label="Descend",
+                        cancel_label="Return to Haven",
+                        confirm_value="descend",
+                        cancel_value="return",
+                        consequence="Descend into Maze Depth 1.",
+                        confirm_aliases=("d",),
+                    )
+                    != "descend"
+                ):
+                    result = self.controller.handle(TakeExpeditionChoice("return_to_haven"))
+                else:
+                    result = self.controller.handle(TakeExpeditionChoice("descend_maze_depth_1"))
+                self._play_events(result.events, result.hci)
+                if not result.success:
+                    self._show_screen(
+                        "Expedition",
+                        render_notice(result.error or "Descent failed.", style="red"),
+                    )
+                    self._pause()
+                else:
+                    report_result = self.controller.handle(ViewExpeditionReport())
+                    if report_result.success and isinstance(
+                        report_result.value,
+                        ExpeditionReportView,
+                    ):
+                        self._show_screen(
+                            "Filed Company Record",
+                            render_expedition_report(report_result.value),
+                        )
+                        self._pause()
                 return
             if action == "enter_generated_maze":
                 result = self.controller.handle(EnterGeneratedMaze())

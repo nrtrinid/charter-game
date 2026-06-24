@@ -79,6 +79,16 @@ class MarkRegionalRoute:
 
 
 @dataclass(frozen=True)
+class VisitEastGate:
+    pass
+
+
+@dataclass(frozen=True)
+class ReturnToHavenTown:
+    pass
+
+
+@dataclass(frozen=True)
 class ViewMemorial:
     pass
 
@@ -315,6 +325,8 @@ Command = (
     | MoveRegional
     | UseRegionalAction
     | MarkRegionalRoute
+    | VisitEastGate
+    | ReturnToHavenTown
     | ViewMemorial
     | GenerateRecruitOffers
     | HireRecruit

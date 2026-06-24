@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Protocol
@@ -415,6 +415,14 @@ def _choose_best_candidate(
     )
 
 
+def choose_heuristic_enemy_candidate(
+    candidates: Sequence[EnemyDecisionCandidate],
+) -> EnemyDecisionCandidate | None:
+    """Pick the highest heuristic-scored legal enemy candidate with stable tie-breaking."""
+
+    return _choose_best_candidate(list(candidates))
+
+
 def _choose_weighted_candidate(
     candidates: tuple[EnemyDecisionCandidate, ...] | list[EnemyDecisionCandidate],
     weights: Mapping[str, int],
@@ -443,6 +451,12 @@ def _score_features(features: EnemyDecisionFeatureVector) -> int:
         for name, value in features.items()
         if name not in _LEARNING_ONLY_FEATURES
     )
+
+
+def score_heuristic_enemy_features(features: Mapping[str, int]) -> int:
+    """Return the production heuristic score for a feature vector."""
+
+    return _score_features(features)
 
 
 def _feature_vector(

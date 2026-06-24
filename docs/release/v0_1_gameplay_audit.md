@@ -98,14 +98,14 @@ Authority order: `DESIGN.md` → `ROADMAP.md` → `data/*.yaml` → tests → `R
 | DONE | Documentation | README combat UI limitation synced | `README.md` Known Limitations | Completed in docs refresh | `README.md` |
 | DONE | Documentation | DESIGN Manual Combat-Lite synced | `DESIGN.md` Manual Combat-Lite | Completed in docs refresh | `DESIGN.md` |
 | DONE | Documentation | DESIGN Coin/reputation split synced | `DESIGN.md` Company And Town Loop | Completed in docs refresh | `DESIGN.md` |
-| HIGH | Post-return UX | Lands on East Gate; filed record not auto-shown | `tui.py` `_finish_playback` | Add "View Filed Record" on arrival brief | `tui.py`, `actions.py` |
+| DONE | Post-return UX | Lands on East Gate; filed record not auto-shown | `tui.py` `_finish_playback` | Add "View Filed Record" on arrival brief | `tui.py`, `actions.py` |
 | HIGH | Post-return UX | Report dock lacks Formation/Memorial/Charter shortcuts | `actions.py` `report_actions` L921–973 | Expand contextual report actions | `actions.py`, `tui.py` |
 | MEDIUM | Contracts | Active charter vs board-accept unclear | `test_town_loop.py` | Charter Office copy for first expedition | `tui.py`, `data/world.yaml` |
-| MEDIUM | Fast travel | Mark Route required despite YAML `known_route_unlock` | `travel.py`; `test_dungeon.py` | Auto-chart on first cave visit or stronger hint | `dungeon.py`, `travel.py` |
+| DONE | Fast travel | Mark Route required despite YAML `known_route_unlock` | `travel.py`; `test_dungeon.py` | Auto-chart on first cave visit or stronger hint | `dungeon.py`, `travel.py` |
 | MEDIUM | Memories | Identity changes buried in Notable Moments | `finalize_report_memory` | Memory section on report or arrival nudge | `views.py`, `tui_widgets.py` |
-| MEDIUM | Breach choice | Depth 1 stub vs generated maze framing | `maze_breach` node | Clearer breach screen copy | `tui.py`, `views.py` |
+| DONE | Breach choice | Depth 1 stub vs generated maze framing | `maze_breach` node | Clearer breach screen copy | `tui.py`, `views.py` |
 | LOW | Footer | Esc opens system menu | `tui.py` footer | "Esc → System menu" on town screens | `tui.py` |
-| POST | World map | Destinations display-only | `views.py`; `tui.py` | Wire to `TravelRegional` when charted | `tui.py`, `actions.py` |
+| DONE | World map | Destinations display-only | `views.py`; `tui.py` | Wire to `TravelRegional` when charted | `tui.py`, `actions.py` |
 
 ---
 

@@ -710,7 +710,7 @@ def _show_dock_warning(action: ScreenAction, *, risk: str, is_combat: bool) -> b
     if is_combat:
         return False
     if str(action.kind) == "travel":
-        return _is_boss_route_action(action)
+        return bool(action.route_warning)
     return risk in {"risky", "irreversible"} or bool(action.confirm)
 
 
@@ -4150,7 +4150,7 @@ def _minimap_node_label(
         marker = "@"
     elif node.visited:
         marker = "o"
-    elif _is_quest_marker_node(node):
+    elif _is_quest_marker_node(node) and not node.cleared:
         marker = "!"
     else:
         marker = "?"

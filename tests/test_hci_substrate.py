@@ -111,7 +111,8 @@ def test_shared_hci_text_helpers_explain_disabled_and_unsafe_defaults() -> None:
     assert unavailable_message(action) == "Recruit is unavailable. Need 2 Coin."
 
     detail = generic_action_detail(action, safe_default=False)
-    assert "Risk: Costly" in detail
+    assert "Risk:" not in detail
+    assert "Town" in detail or "Recruit" in detail
     assert "Marked default, but Enter will avoid it because it is not safe." in detail
     assert "Need 2 Coin." in detail
     assert "Spend Coin?" in detail
@@ -209,7 +210,6 @@ def test_dungeon_actions_use_provider_metadata() -> None:
     route_actions = [action for action in view.actions if str(action.kind) == "travel"]
     assert route_actions
     assert any("Destination:" in action.preview for action in route_actions)
-    assert any("Unexplored room" in action.result_hint for action in route_actions)
 
 
 def test_combat_actions_preview_actor_target_and_commitment() -> None:

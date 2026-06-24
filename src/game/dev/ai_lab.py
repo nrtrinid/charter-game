@@ -17,6 +17,11 @@ from game.dev.ai_counterfactuals import (
     format_counterfactual_sweep,
     run_counterfactual_sweep,
 )
+from game.dev.ai_oracle import (
+    OracleReportConfig,
+    build_oracle_report,
+    format_oracle_report,
+)
 from game.dev.ai_packages import evaluate_enemy_packages, format_package_report
 from game.dev.ai_tactics import (
     TacticDiscoveryConfig,
@@ -100,6 +105,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Dev-only AI and route evaluation lab.")
     subparsers = parser.add_subparsers(dest="command", required=True)
     _add_enemy_packages_parser(subparsers)
+    _add_oracle_report_parser(subparsers)
     _add_route_parser(subparsers)
     _add_generated_route_parser(subparsers)
     _add_enemy_sweep_parser(subparsers)
@@ -111,6 +117,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "enemy-packages":
         print(_run_enemy_packages_command(args))
+    elif args.command == "oracle-report":
+        print(_run_oracle_report_command(args))
     elif args.command == "route":
         print(_run_route_command(args))
     elif args.command == "generated-route":
@@ -154,6 +162,25 @@ def _add_enemy_packages_parser(subparsers) -> None:
         default=[],
         choices=SUPPORTED_POLICY_SCOPE_IDS,
     )
+
+
+def _add_oracle_report_parser(subparsers) -> None:
+    parser = subparsers.add_parser(
+        "oracle-report",
+        help="report score-only heuristic oracle misses and counterplay metrics",
+    )
+    _add_common_training_args(parser)
+    parser.add_argument("--route", choices=SUPPORTED_ROUTE_IDS, default="opening_pressure_path")
+    parser.add_argument("--encounter", action="append", default=[])
+    parser.add_argument("--eval-hero-policy", action="append", default=[])
+    parser.add_argument("--cross-policy", action="store_true")
+    parser.add_argument(
+        "--policy-scope",
+        action="append",
+        default=[],
+        choices=SUPPORTED_POLICY_SCOPE_IDS,
+    )
+    parser.add_argument("--miss-threshold", type=int, default=1)
 
 
 def _add_route_parser(subparsers) -> None:
@@ -288,6 +315,32 @@ def _run_enemy_packages_command(args) -> str:
         (
             format_training_summary(summary),
             format_package_report(evaluate_enemy_packages(summary)),
+        )
+    )
+
+
+def _run_oracle_report_command(args) -> str:
+    evaluation_hero_policy_ids = (
+        SUPPORTED_HERO_POLICY_IDS if args.cross_policy else tuple(args.eval_hero_policy)
+    )
+    summary = run_training_harness(
+        TrainingRunConfig(
+            encounter_ids=tuple(args.encounter),
+            seeds=args.seeds,
+            max_rounds=args.max_rounds,
+            hero_policy_id=args.hero_policy,
+            evaluation_hero_policy_ids=evaluation_hero_policy_ids,
+            policy_scope_ids=tuple(args.policy_scope) or ("global",),
+            preset_id=args.preset,
+            route_id=args.route if not args.encounter else "",
+            enemy_wait_mode=args.enemy_wait_mode,
+            enemy_movement_mode=args.enemy_move_mode,
+        )
+    )
+    return format_oracle_report(
+        build_oracle_report(
+            summary,
+            OracleReportConfig(miss_threshold=args.miss_threshold),
         )
     )
 

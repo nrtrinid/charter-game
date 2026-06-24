@@ -235,7 +235,9 @@ def generic_action_detail(
 ) -> str:
     hotkey = primary_hotkey(action)
     lines = ["Stage Focus", "", action.label]
-    lines.append(format_meta_line(kind_label(action), f"Risk: {risk_label(action)}"))
+    kind = kind_label(action)
+    if kind and str(kind).lower() not in {"general", ""}:
+        lines.append(kind)
     if hotkey:
         lines.append(f"Hotkey: {hotkey}")
     if action.default and safe_default:

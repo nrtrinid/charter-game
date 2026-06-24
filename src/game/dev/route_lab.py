@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import cast
 
 from game.campaign.company import (
     CompanyState,
@@ -48,6 +47,10 @@ SUPPORTED_ROUTE_ENVELOPE_IDS = (
     "generated_maze_hunt",
 )
 SUPPORTED_GENERATED_ROUTE_STRATEGIES = ("mainline", "take_reward_branch", "take_all_optional")
+
+BIMODAL_NONCOMPLETION_RATE_WARN_MIN = 0.25
+BIMODAL_NONCOMPLETION_RATE_FAIL_MIN = 0.50
+BIMODAL_BOSS_ENTRY_MAX_UNSET = 999
 
 
 @dataclass(frozen=True)
@@ -248,30 +251,47 @@ def run_generated_route_lab(config: GeneratedRouteLabConfig) -> GeneratedRouteLa
     )
 
 
+def pre_boss_failure_count(
+    failed_at_counts: Mapping[str, int] | None,
+) -> int:
+    if not failed_at_counts:
+        return 0
+    return sum(
+        count
+        for encounter_id, count in failed_at_counts.items()
+        if encounter_id not in {None, "cave_mini_boss", "generated_maze_hunt"}
+    )
+
+
 def score_route_envelope(
     route_summary: RoutePressureSummary,
     *,
     envelope_id: str,
 ) -> RouteEnvelopeScore:
     envelope = _envelope(envelope_id)
-    completion_rate = (
-        route_summary.completed_count / route_summary.route_count
-        if route_summary.route_count
-        else 0.0
-    )
+    routes = route_summary.route_count
+    completed = route_summary.completed_count
+    completion_rate = completed / routes if routes else 0.0
+    noncompletion_count = routes - completed
+    noncompletion_rate = noncompletion_count / routes if routes else 0.0
+    early_failure_count = pre_boss_failure_count(route_summary.failed_at_counts)
     metrics: dict[str, float | int | str] = {
         "completion_rate": completion_rate,
-        "routes": route_summary.route_count,
-        "completed": route_summary.completed_count,
+        "noncompletion_count": noncompletion_count,
+        "noncompletion_rate": noncompletion_rate,
+        "routes": routes,
+        "completed": completed,
         "final_hp": route_summary.average_final_hero_hp,
         "final_effort": route_summary.average_final_hero_effort,
         "boss_entry_hp": route_summary.average_hp_entering_cave_mini_boss,
         "boss_exit_hp": route_summary.average_hp_leaving_cave_mini_boss,
     }
+    if route_summary.failed_at_counts is not None:
+        metrics["early_failure_count"] = early_failure_count
     return _score_envelope_values(
         envelope,
         metrics,
-        cast(Mapping[str | None, int], route_summary.failed_at_counts),
+        route_summary.failed_at_counts,
     )
 
 
@@ -303,7 +323,7 @@ def score_generated_route_envelope(
     return _score_envelope_values(
         envelope,
         metrics,
-        cast(Mapping[str | None, int], dict(failed_at_counts)),
+        dict(failed_at_counts),
     )
 
 
@@ -318,7 +338,7 @@ def format_route_lab_summary(summary: RouteLabSummary) -> str:
         (
             "Completion: "
             f"{route.completed_count}/{route.route_count}; "
-            f"failed {_format_counts(cast(Mapping[str | None, int], route.failed_at_counts))}"
+            f"failed {_format_counts(route.failed_at_counts)}"
         ),
         (
             "Final condition: "
@@ -349,7 +369,7 @@ def format_generated_route_lab_summary(summary: GeneratedRouteLabSummary) -> str
         f"Pressure profile: {summary.pressure_profile_id or 'director'}",
         "Completion: "
         f"{completed}/{len(summary.runs)}; "
-        f"failed {_format_counts(cast(Mapping[str | None, int], dict(failed)))}",
+        f"failed {_format_counts(dict(failed))}",
         (
             "Route shape: "
             f"rooms {_average(route_lengths):.1f}; "
@@ -471,10 +491,83 @@ def _main_route_nodes(route: GeneratedDungeonState):
     )
 
 
+def _detect_bimodal_collapse(
+    envelope: RouteEnvelope,
+    metrics: Mapping[str, float | int | str],
+    failed_at_counts: Mapping[str, int] | None,
+) -> tuple[str, bool] | None:
+    routes = metrics.get("routes")
+    completed = metrics.get("completed")
+    if routes is None or completed is None:
+        return None
+    routes_int = int(routes)
+    completed_int = int(completed)
+    if routes_int <= 0 or completed_int >= routes_int:
+        return None
+
+    noncompletion_rate = float(metrics.get("noncompletion_rate", 0.0))
+    if noncompletion_rate < BIMODAL_NONCOMPLETION_RATE_WARN_MIN:
+        return None
+
+    completion_rate = float(metrics["completion_rate"])
+    if completion_rate > envelope.completion_max:
+        return None
+
+    final_hp = metrics.get("final_hp")
+    final_hp_low = False
+    final_hp_value: float | None = None
+    if final_hp is not None:
+        final_hp_value = float(final_hp)
+        if envelope.final_hp_max < BIMODAL_BOSS_ENTRY_MAX_UNSET:
+            final_hp_low = final_hp_value < envelope.final_hp_max
+        elif envelope.boss_entry_hp_max < BIMODAL_BOSS_ENTRY_MAX_UNSET:
+            final_hp_low = final_hp_value < envelope.boss_entry_hp_max
+
+    boss_entry_hp = metrics.get("boss_entry_hp")
+    boss_entry_high = False
+    boss_entry_value: float | None = None
+    if (
+        envelope.boss_entry_hp_max < BIMODAL_BOSS_ENTRY_MAX_UNSET
+        and boss_entry_hp is not None
+    ):
+        boss_entry_value = float(boss_entry_hp)
+        if (
+            boss_entry_value > 0
+            and boss_entry_value > envelope.boss_entry_hp_max
+        ):
+            boss_entry_high = True
+
+    if not final_hp_low or not boss_entry_high:
+        return None
+    if final_hp_value is None or boss_entry_value is None:
+        return None
+
+    noncompletion_count = int(metrics.get("noncompletion_count", routes_int - completed_int))
+    detail_parts = [
+        f"completion {completion_rate:.0%}",
+        f"noncompletion {noncompletion_count}/{routes_int}",
+        (
+            f"boss-entry {boss_entry_value:.1f} among survivors exceeds max "
+            f"{envelope.boss_entry_hp_max}"
+        ),
+        f"final HP {final_hp_value:.1f}",
+    ]
+    early_failures = pre_boss_failure_count(failed_at_counts)
+    if early_failures > 0:
+        detail_parts.append(f"pre-boss failures {early_failures}")
+    detail = "; ".join(detail_parts)
+
+    severe = (
+        noncompletion_rate >= BIMODAL_NONCOMPLETION_RATE_FAIL_MIN
+        or completion_rate < envelope.completion_min
+    )
+    return detail, severe
+
+
 def _score_envelope_values(
     envelope: RouteEnvelope,
     metrics: Mapping[str, float | int | str],
-    failed_at_counts: Mapping[str | None, int],
+    failed_at_counts: Mapping[str, int],
 ) -> RouteEnvelopeScore:
     score = 100
     warnings: list[str] = []
@@ -495,22 +588,28 @@ def _score_envelope_values(
     elif final_hp > envelope.final_hp_max:
         score -= 10
         warnings.append("final HP above target band")
-    boss_entry = float(metrics.get("boss_entry_hp", 0.0))
-    if boss_entry:
-        if boss_entry < envelope.boss_entry_hp_min:
-            score -= 15
-            warnings.append("party reaches boss already doomed")
-            if boss_entry < envelope.boss_entry_hp_min * 0.5:
-                severe = True
-        elif boss_entry > envelope.boss_entry_hp_max:
+    bimodal = _detect_bimodal_collapse(envelope, metrics, failed_at_counts)
+    if bimodal is not None:
+        detail, bimodal_severe = bimodal
+        warnings.append(f"route_bimodal_collapse: {detail}")
+        if bimodal_severe:
+            score -= 20
+            severe = True
+        else:
             score -= 10
-            warnings.append("party reaches boss too healthy")
+    else:
+        boss_entry = float(metrics.get("boss_entry_hp", 0.0))
+        if boss_entry:
+            if boss_entry < envelope.boss_entry_hp_min:
+                score -= 15
+                warnings.append("party reaches boss already doomed")
+                if boss_entry < envelope.boss_entry_hp_min * 0.5:
+                    severe = True
+            elif boss_entry > envelope.boss_entry_hp_max:
+                score -= 10
+                warnings.append("party reaches boss too healthy")
     if not envelope.allow_early_failures:
-        early_failures = sum(
-            count
-            for encounter_id, count in failed_at_counts.items()
-            if encounter_id not in {None, "cave_mini_boss", "generated_maze_hunt"}
-        )
+        early_failures = pre_boss_failure_count(failed_at_counts)
         if early_failures:
             score -= 20
             warnings.append("early failures observed")
@@ -572,7 +671,7 @@ def _format_envelope_score(score: RouteEnvelopeScore) -> str:
     return f"Envelope {score.envelope_id}: {score.status} score={score.score}; {warnings}"
 
 
-def _format_counts(counts: Mapping[str | None, int]) -> str:
+def _format_counts(counts: Mapping[str, int]) -> str:
     if not counts:
         return "none"
     return ", ".join(f"{key}={value}" for key, value in sorted(counts.items()))
@@ -591,6 +690,7 @@ __all__ = [
     "format_route_lab_summary",
     "run_generated_route_lab",
     "run_route_lab",
+    "pre_boss_failure_count",
     "score_generated_route_envelope",
     "score_route_envelope",
 ]

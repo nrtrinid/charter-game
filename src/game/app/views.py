@@ -69,10 +69,12 @@ from game.content.definitions import GameDefinitions
 from game.core.events import GameEvent
 from game.data.schemas import ExpeditionNodeDefinition, ExpeditionRoomActionDefinition
 from game.expedition.dungeon import (
+    SHALLOW_CAVE_BREACH_NODE_ID,
     active_dungeon_nodes,
     revealed_exit_node_ids,
     room_action_key,
 )
+from game.expedition.expedition import OPENING_BREACH_PENDING_FLAG
 from game.expedition.generated_maze import (
     GENERATED_MAZE_REPEATABLE_HUNT_CONTRACT_ID,
     GENERATED_MAZE_REPEATABLE_SCOUT_CONTRACT_ID,
@@ -94,6 +96,7 @@ from game.expedition.travel import (
     REGIONAL_OVERWORLD_NODE_IDS,
     get_regional_node_id,
     regional_available_exit_ids,
+    regional_known_exit_ids_by_node,
     regional_overworld_nodes,
     world_location_id_for_node,
 )
@@ -894,11 +897,11 @@ def build_regional_map_view(
             )
     known_ids = {node_id for node_id in known_ids if node_id in REGIONAL_OVERWORLD_NODE_IDS}
     known_ids.add(current_node_id)
-    known_exit_ids_by_node = {
-        node_id: regional_available_exit_ids(company, definitions, node_id)
-        for node_id in known_ids
-        if node_id in nodes
-    }
+    known_exit_ids_by_node = regional_known_exit_ids_by_node(
+        definitions,
+        known_ids,
+        memory,
+    )
     quest_target_node_ids = _quest_target_node_ids(company, None)
     map_nodes = tuple(
         _dungeon_node_view(
@@ -1914,8 +1917,14 @@ def build_dungeon_view(
         and not session.generated_dungeon.collapsed
         and current.id == session.generated_dungeon.entry_node_id
     )
-    can_enter_generated_maze = current.node_type.value == "breach" and (
-        session.generated_dungeon is None or session.generated_dungeon.collapsed
+    opening_breach_at_breach = bool(
+        company.flags.get(OPENING_BREACH_PENDING_FLAG, False)
+        and session.current_node_id == SHALLOW_CAVE_BREACH_NODE_ID
+    )
+    can_enter_generated_maze = (
+        current.node_type.value == "breach"
+        and (session.generated_dungeon is None or session.generated_dungeon.collapsed)
+        and not opening_breach_at_breach
     )
     generated_active = (
         session.generated_dungeon is not None and not session.generated_dungeon.collapsed
@@ -1975,7 +1984,7 @@ def build_dungeon_view(
         known_ids.update(preview_exit_ids)
 
     known_exit_ids_by_node: dict[str, tuple[str, ...]] = {}
-    for node_id in anchor_ids:
+    for node_id in known_ids:
         if node_id not in nodes:
             continue
         exit_ids = tuple(
@@ -2095,6 +2104,7 @@ def build_dungeon_view(
         unstable_frontier_exit_ids=tuple(preview.exit_id for preview in frontier_previews),
         previous_node_id=session.previous_node_id,
         current_node_id=current.id,
+        opening_breach_at_breach=opening_breach_at_breach,
     )
     return DungeonView(
         expedition_id=session.expedition_id,

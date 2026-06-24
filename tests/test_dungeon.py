@@ -20,6 +20,7 @@ from game.app.commands import (
     RetreatCombat,
     RetreatGeneratedMaze,
     ReturnFromDungeon,
+    ReturnToHavenTown,
     StartExpedition,
     StartNewCompany,
     TakeExpeditionChoice,
@@ -29,11 +30,18 @@ from game.app.commands import (
     ViewDungeon,
     ViewExpeditionReport,
     ViewRegionalMap,
+    VisitEastGate,
     WithdrawGeneratedMaze,
 )
 from game.app.controller import AppController
 from game.app.manual_combat import legal_skill_ids, legal_target_ids
-from game.app.views import CombatView, DungeonView, ExpeditionReportView, RegionalMapView
+from game.app.views import (
+    CombatView,
+    DungeonView,
+    ExpeditionReportView,
+    RegionalMapView,
+    TownDashboardView,
+)
 from game.campaign.company import DungeonMemoryState
 from game.campaign.save_load import load_company, save_company
 from game.combat.combat_state import LifeState
@@ -193,6 +201,66 @@ def test_map_region_scope_keeps_cave_and_wilderness_maps_separate() -> None:
     assert "cave_fork" in map_node_ids
 
 
+def test_regional_east_gate_minimap_draws_old_road_connection() -> None:
+    from game.app.commands import StartNewCompany
+    from game.app.controller import AppController
+    from game.app.views import build_regional_map_view, build_regional_render_view
+    from game.ui.tui_widgets import DungeonMapPanel
+
+    controller = AppController(definitions=get_definitions())
+    controller.handle(StartNewCompany())
+    assert controller.company is not None
+    assert "shallow_cave" not in controller.company.known_route_ids
+
+    view = build_regional_map_view(controller.company, controller.definitions)
+    map_nodes = {node.node_id: node for node in view.map_nodes}
+    assert view.current_node_id == "town_gate"
+    assert "old_road" in map_nodes
+    assert map_nodes["town_gate"].exit_node_ids == ("old_road",)
+
+    render_view = build_regional_render_view(view)
+    map_text = DungeonMapPanel.render_minimap_text(render_view)
+    map_body = "\n".join(
+        line
+        for line in map_text.splitlines()[3:]
+        if line and not line.startswith("Legend:")
+    )
+    assert "|" in map_body or "-" in map_body
+
+
+def test_dungeon_minimap_draws_edges_between_known_unvisited_submap_nodes() -> None:
+    from game.ui.tui_widgets import DungeonMapPanel
+
+    controller = _started_interactive_controller()
+    _move_along(
+        controller,
+        "old_road",
+        "hunters_trail",
+        "dry_creek_bed",
+        "black_stone_sinkhole",
+        "shallow_cave_entrance",
+        "shallow_cave_room_1",
+    )
+
+    view_result = controller.handle(ViewDungeon())
+    assert view_result.success, view_result.error
+    assert isinstance(view_result.value, DungeonView)
+    cave_view = view_result.value
+    map_nodes = {node.node_id: node for node in cave_view.map_nodes}
+    assert cave_view.current_map_id == "shallow_cave"
+    assert "cave_fork" in map_nodes
+    assert "cave_fork" in map_nodes["shallow_cave_room_1"].exit_node_ids
+    assert "shallow_cave_room_1" in map_nodes["cave_fork"].exit_node_ids
+
+    map_text = DungeonMapPanel.render_minimap_text(cave_view)
+    map_body = "\n".join(
+        line
+        for line in map_text.splitlines()[3:]
+        if line and not line.startswith("Legend:")
+    )
+    assert "|" in map_body or "-" in map_body
+
+
 def test_dungeon_map_marks_town_gate_when_contract_available() -> None:
     controller = AppController(definitions=get_definitions())
     controller.handle(StartNewCompany())
@@ -297,6 +365,30 @@ def test_dungeon_map_clears_boss_quest_marker_after_victory() -> None:
     assert isinstance(view_result.value, DungeonView)
     map_nodes = {node.node_id: node for node in view_result.value.map_nodes}
     assert map_nodes["maze_touched_lair"].quest_marker is False
+
+
+def test_cleared_boss_route_drops_route_warning() -> None:
+    from game.app.actions import route_action_warns_player
+
+    controller = _started_interactive_controller()
+    _reach_boss(controller)
+    _win_active_manual_combat(controller)
+    _move_along(controller, "maze_touched_lair", "stone_gate")
+
+    view_result = controller.handle(ViewDungeon())
+    assert view_result.success, view_result.error
+    assert isinstance(view_result.value, DungeonView)
+    lair_exit = next(
+        exit_view
+        for exit_view in view_result.value.exits
+        if exit_view.node_id == "maze_touched_lair"
+    )
+    assert lair_exit.cleared
+    assert not route_action_warns_player(lair_exit)
+    lair_action = next(
+        action for action in view_result.value.actions if action.value == "maze_touched_lair"
+    )
+    assert not lair_action.route_warning
 
 
 def test_dungeon_map_nodes_include_memory_and_inventory_metadata() -> None:
@@ -566,6 +658,14 @@ def test_boss_victory_moves_to_breach_and_return_creates_report() -> None:
     assert controller.company.active_expedition.current_node_id == "maze_breach"
     assert controller.company.flags["opening_breach_pending"]
 
+    view_result = controller.handle(ViewDungeon())
+    assert view_result.success
+    assert isinstance(view_result.value, DungeonView)
+    action_values = [action.value for action in view_result.value.actions]
+    assert "return_to_haven" in action_values
+    assert "descend_maze_depth_1" in action_values
+    assert "enter_generated_maze" not in action_values
+
     result = controller.handle(TakeExpeditionChoice("return_to_haven"))
 
     assert result.success
@@ -642,6 +742,14 @@ def test_generated_maze_enters_from_breach_and_renders_nodes() -> None:
     controller = _started_interactive_controller()
     _reach_boss(controller)
     _win_active_manual_combat(controller)
+    breach_view_result = controller.handle(ViewDungeon())
+    assert breach_view_result.success
+    assert isinstance(breach_view_result.value, DungeonView)
+    assert any(
+        action.value == "return_to_haven" for action in breach_view_result.value.actions
+    )
+    assert controller.company is not None
+    controller.company.flags["opening_breach_pending"] = False
     breach_view_result = controller.handle(ViewDungeon())
     assert breach_view_result.success
     assert isinstance(breach_view_result.value, DungeonView)
@@ -1461,9 +1569,6 @@ def test_regional_travel_charted_hop_compresses_opening_route() -> None:
     assert result.value.current_node_id == "shallow_cave_entrance"
     assert controller.company.active_expedition is None
     assert len(controller.company.expedition_reports) == 1
-
-    mark_result = controller.handle(MarkRegionalRoute())
-    assert mark_result.success, mark_result.error
     assert "shallow_cave" in controller.company.known_route_ids
 
     map_result = controller.handle(ViewRegionalMap())
@@ -1592,6 +1697,38 @@ def test_travel_regional_haven_lands_at_east_gate_view() -> None:
     assert view.place_title == "East Gate"
     assert controller.company.town_state["location_id"] == "haven"
     assert controller.company.town_state["regional_node_id"] == "town_gate"
+
+
+def test_visit_east_gate_from_haven_sets_regional_view() -> None:
+    controller = AppController(definitions=get_definitions())
+    controller.handle(StartNewCompany())
+    assert controller.company is not None
+    assert controller.company.town_state["location_id"] == "haven"
+    assert controller.company.active_expedition is None
+
+    result = controller.handle(VisitEastGate())
+    assert result.success, result.error
+    view = result.value
+    assert isinstance(view, RegionalMapView)
+    assert view.current_node_id == "town_gate"
+    assert view.anchor_kind == "east_gate"
+    assert controller.company.town_state["regional_node_id"] == "town_gate"
+
+
+def test_return_to_haven_town_from_east_gate() -> None:
+    controller = AppController(definitions=get_definitions())
+    controller.handle(StartNewCompany())
+    assert controller.company is not None
+
+    visit_result = controller.handle(VisitEastGate())
+    assert visit_result.success, visit_result.error
+    regional_node_id = controller.company.town_state["regional_node_id"]
+
+    result = controller.handle(ReturnToHavenTown())
+    assert result.success, result.error
+    assert isinstance(result.value, TownDashboardView)
+    assert controller.company.town_state["location_id"] == "haven"
+    assert controller.company.town_state["regional_node_id"] == regional_node_id
 
 
 def test_defeat_return_still_lands_in_haven() -> None:
@@ -1961,6 +2098,9 @@ def _move_along(controller: AppController, *node_ids: str) -> None:
 
 
 def _mark_charted_route_at_cave_entrance(controller: AppController) -> None:
+    assert controller.company is not None
+    if "shallow_cave" in controller.company.known_route_ids:
+        return
     result = controller.handle(MarkRegionalRoute())
     assert result.success, result.error
 
@@ -2242,7 +2382,7 @@ def test_move_regional_walks_cave_exit_nodes_before_route_charted() -> None:
     )
     controller.handle(ReturnFromDungeon())
     assert controller.company is not None
-    assert "shallow_cave" not in controller.company.known_route_ids
+    assert "shallow_cave" in controller.company.known_route_ids
 
     result = controller.handle(MoveRegional("black_stone_sinkhole"))
 
@@ -2290,8 +2430,7 @@ def test_travel_regional_sets_anchor_regional_node_id() -> None:
     controller.handle(ReturnFromDungeon())
     assert controller.company is not None
     assert controller.company.town_state["regional_node_id"] == "shallow_cave_entrance"
-    mark_result = controller.handle(MarkRegionalRoute())
-    assert mark_result.success, mark_result.error
+    assert "shallow_cave" in controller.company.known_route_ids
 
     controller.handle(TravelRegional("haven"))
     result = controller.handle(TravelRegional("shallow_cave"))
@@ -2300,6 +2439,30 @@ def test_travel_regional_sets_anchor_regional_node_id() -> None:
     assert controller.company.town_state["regional_node_id"] == "shallow_cave_entrance"
     assert isinstance(result.value, RegionalMapView)
     assert result.value.anchor_kind == "shallow_cave"
+
+
+def test_auto_chart_on_cave_entrance_arrival() -> None:
+    controller = _started_interactive_controller()
+    _move_along(
+        controller,
+        "old_road",
+        "hunters_trail",
+        "dry_creek_bed",
+        "black_stone_sinkhole",
+        "shallow_cave_entrance",
+    )
+    assert controller.company is not None
+    assert "shallow_cave" not in controller.company.known_route_ids
+
+    result = controller.handle(ReturnFromDungeon())
+
+    assert result.success
+    assert "shallow_cave" in controller.company.known_route_ids
+    assert any(
+        "Charted approach mapped" in event.message
+        for event in result.events
+        if hasattr(event, "message")
+    )
 
 
 def test_regional_anchor_actions_follow_current_node() -> None:
@@ -2317,23 +2480,17 @@ def test_regional_anchor_actions_follow_current_node() -> None:
     )
     controller.handle(ReturnFromDungeon())
     assert controller.company is not None
+    assert "shallow_cave" in controller.company.known_route_ids
 
     cave_view = build_regional_map_view(controller.company, controller.definitions)
     cave_actions = ActionProvider.regional_place_actions(cave_view)
     cave_values = [action.value for action in cave_actions]
     assert cave_values.index("black_stone_sinkhole") < cave_values.index("enter_cave")
-    assert cave_values.index("enter_cave") < cave_values.index("mark_route")
-    assert "survey_route" not in cave_values
-    assert not any(action.value == "enter_haven" for action in cave_actions)
-    assert not any(action.value == "system" for action in cave_actions)
-
-    mark_result = controller.handle(MarkRegionalRoute())
-    assert mark_result.success, mark_result.error
-    cave_view = build_regional_map_view(controller.company, controller.definitions)
-    cave_actions = ActionProvider.regional_place_actions(cave_view)
-    cave_values = [action.value for action in cave_actions]
     assert cave_values.index("enter_cave") < cave_values.index("survey_route")
     assert "mark_route" not in cave_values
+    assert "survey_route" in cave_values
+    assert not any(action.value == "enter_haven" for action in cave_actions)
+    assert not any(action.value == "system" for action in cave_actions)
 
     controller.handle(TravelRegional("haven"))
     controller.company.town_state["regional_node_id"] = "old_road"
@@ -2345,19 +2502,17 @@ def test_regional_anchor_actions_follow_current_node() -> None:
     gate_view = build_regional_map_view(controller.company, controller.definitions)
     gate_actions = ActionProvider.regional_place_actions(gate_view)
     gate_values = [action.value for action in gate_actions]
+    assert gate_values.index("shallow_cave") < gate_values.index("old_road")
     assert gate_values.index("old_road") < gate_values.index("survey_route")
     assert gate_values.index("survey_route") < gate_values.index("enter_haven")
     roadbook_action = next(action for action in gate_actions if action.value == "survey_route")
     assert roadbook_action.label == "Open Roadbook"
     assert next(action for action in gate_actions if action.value == "old_road").label == (
-        "Walk to Old Road"
+        "Leave by Old Road"
     )
-    assert not any(action.value == "enter_cave" for action in gate_actions)
-    assert not any(action.value == "system" for action in gate_actions)
-
-    map_actions = ActionProvider.regional_map_travel_actions(gate_view)
-    charted_action = next(action for action in map_actions if action.value == "shallow_cave")
+    charted_action = next(action for action in gate_actions if action.value == "shallow_cave")
     assert charted_action.label == "Take Charted Road to Shallow Cave"
+    assert charted_action.default is True
     assert "Route: charted road." in charted_action.preview
     assert "No new discoveries on this route." in charted_action.result_hint
     gate_view_uncharted = replace(gate_view, route_charted=False, travel_available=False)

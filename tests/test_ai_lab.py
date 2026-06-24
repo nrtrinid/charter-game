@@ -139,3 +139,66 @@ def test_ai_lab_balance_breach_fights_dry_run_outputs_candidates(capsys) -> None
     assert "Breach Fight Balance Lab" in text
     assert "Ranked candidates:" in text
     assert "Applied: no" in text or "Selected: none" in text
+
+
+def test_ai_lab_oracle_report_command_runs(capsys) -> None:
+    result = ai_lab.main(
+        [
+            "oracle-report",
+            "--route",
+            "opening_critical_path",
+            "--seeds",
+            "1",
+            "--max-rounds",
+            "1",
+        ]
+    )
+
+    text = capsys.readouterr().out
+
+    assert result == 0
+    assert "AI Lab Oracle Report" in text
+
+
+def test_ai_lab_oracle_report_output_structure(capsys) -> None:
+    result = ai_lab.main(
+        [
+            "oracle-report",
+            "--route",
+            "opening_pressure_path",
+            "--seeds",
+            "1",
+            "--max-rounds",
+            "1",
+        ]
+    )
+
+    text = capsys.readouterr().out
+
+    assert result == 0
+    assert "Oracle mode: score-only heuristic (depth-0)" in text
+    assert "enemy actions checked:" in text
+    assert "oracle misses:" in text
+    assert "Counterplay:" in text
+    assert "Findings:" in text
+    assert "noncompletion:" in text
+
+
+def test_ai_lab_enemy_packages_still_works(capsys) -> None:
+    result = ai_lab.main(
+        [
+            "enemy-packages",
+            "--route",
+            "opening_critical_path",
+            "--seeds",
+            "1",
+            "--max-rounds",
+            "1",
+        ]
+    )
+
+    text = capsys.readouterr().out
+
+    assert result == 0
+    assert "Enemy AI Training Harness" in text
+    assert "Package Health:" in text

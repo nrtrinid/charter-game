@@ -16,50 +16,15 @@ from textual.widgets import Input, Static
 
 from game.app.actions import (
     ActionProvider,
-    quantity_detail,
-    room_action_preview,
-    room_action_result_hint,
     room_action_state_reason,
 )
 from game.app.commands import (
-    AcceptContract,
     AssignActiveHero,
-    BuySupply,
-    ChooseCombatSkill,
-    ChooseCombatTarget,
-    DelayCombatTurn,
-    EnterGeneratedMaze,
-    EquipGear,
     GenerateRecruitOffers,
-    HireRecruit,
-    InspectDungeonRoom,
     LoadGame,
-    MarkRegionalRoute,
-    MoveCombatActor,
-    MoveDungeon,
-    MoveRegional,
-    PassCombatTurn,
-    PerformDeepSurgery,
-    PurchaseGear,
-    PurchaseUpgrade,
-    Quit,
-    RecoverCompany,
-    ResolveCombatAction,
-    ResolveCombatReaction,
-    RetraceGeneratedMaze,
-    RetreatCombat,
-    RetreatGeneratedMaze,
-    ReturnFromDungeon,
     SaveGame,
-    SellLoot,
     StartExpedition,
     StartNewCompany,
-    TakeExpeditionChoice,
-    TravelRegional,
-    TurnInLoot,
-    UnequipGear,
-    UseDungeonAction,
-    UseRegionalAction,
     ViewCombat,
     ViewDungeon,
     ViewExpeditionReport,
@@ -72,7 +37,6 @@ from game.app.commands import (
     ViewSupplies,
     ViewTown,
     ViewWorld,
-    WithdrawGeneratedMaze,
 )
 from game.app.controller import AppController
 from game.app.views import (
@@ -119,7 +83,6 @@ from game.combat.enemy_decision import (
     production_enemy_movement_mode,
     production_enemy_wait_mode,
 )
-from game.combat.formation import FormationSlot
 from game.core.events import (
     CombatEffectEvent,
     DamageEvent,
@@ -153,8 +116,14 @@ from game.ui.hci_text import (
     kind_label,
     primary_hotkey,
     result_log_text,
-    risk_label,
     unavailable_message,
+)
+from game.ui.tui_handlers import (
+    CombatHandlers,
+    DungeonHandlers,
+    RegionalHandlers,
+    ShellHandlers,
+    TownHandlers,
 )
 from game.ui.tui_models import ScreenDescriptor, TuiScreenModel
 from game.ui.tui_widgets import (
@@ -215,38 +184,26 @@ def _route_direction_label(exit_node: Any) -> str:
     return direction.title() if direction else "Listed Exit"
 
 
-def _route_state_label(exit_node: Any) -> str:
-    if bool(getattr(exit_node, "cleared", False)):
-        return "Cleared"
-    if bool(getattr(exit_node, "visited", False)):
-        return "Visited"
-    return "Unexplored"
-
-
 def _route_summary_line(exit_node: Any) -> str:
-    pieces = [_route_direction_label(exit_node), _route_state_label(exit_node)]
+    pieces = [_route_direction_label(exit_node)]
     tag = _route_exception_tag(exit_node)
     if tag:
         pieces.append(tag)
-    return " - ".join(pieces)
+    return " - ".join(piece for piece in pieces if piece)
 
 
 def _route_exception_tag(exit_node: Any) -> str:
+    if bool(getattr(exit_node, "cleared", False)):
+        return ""
     node_type = str(getattr(exit_node, "node_type", ""))
     if node_type not in {"boss", "breach", "maze"}:
         return ""
     return node_type.replace("_", " ").title()
 
 
-def _route_expectation(exit_node: Any) -> str:
-    if not bool(getattr(exit_node, "visited", False)):
-        return "Expect a new room, obstacle, or discovery."
-    if bool(getattr(exit_node, "cleared", False)):
-        return "Return along a cleared path."
-    return "Return along a known path."
-
-
 def _route_warning_line(exit_node: Any) -> str:
+    if bool(getattr(exit_node, "cleared", False)):
+        return ""
     node_type = str(getattr(exit_node, "node_type", ""))
     if node_type == "boss":
         return "Warning: serious danger ahead."
@@ -427,6 +384,11 @@ class CharterApp(App):
         self._company_summary_objective = ""
         self._company_summary_roster_lines: list[str] = []
         self.input_mode: str | None = None
+        self._regional_handlers = RegionalHandlers(self)
+        self._town_handlers = TownHandlers(self)
+        self._dungeon_handlers = DungeonHandlers(self)
+        self._combat_handlers = CombatHandlers(self)
+        self._shell_handlers = ShellHandlers(self)
 
     def compose(self) -> ComposeResult:
         yield StatusHeader(id="header")
@@ -1143,71 +1105,107 @@ class CharterApp(App):
         )
 
     def _town_hub_actions(self) -> tuple[ScreenAction, ...]:
-        return (
+        actions: list[ScreenAction] = []
+        company = self.controller.company
+        route_charted = (
+            company is not None and "shallow_cave" in company.known_route_ids
+        )
+        if route_charted:
+            actions.append(
+                ScreenAction(
+                    "1",
+                    "Take Charted Road to Shallow Cave",
+                    "shallow_cave",
+                    ("c", "cave", "travel"),
+                    default=True,
+                    description="Fast travel along the charted road to the cave mouth.",
+                    kind=ScreenActionKind.TRAVEL,
+                    risk=ScreenActionRisk.LOW,
+                    cost="1 ration when available",
+                    preview="Follow the charted road to Shallow Cave.",
+                    result_hint="Arrives at the cave mouth, skipping cleared Old Road beats.",
+                )
+            )
+        actions.append(
             ScreenAction(
-                "1",
+                str(len(actions) + 1),
                 "East Gate",
                 "east_gate",
                 ("l", "travel"),
-                default=True,
+                default=not route_charted,
                 description="Roads and regional travel.",
                 kind=ScreenActionKind.TRAVEL,
                 risk=ScreenActionRisk.LOW,
                 preview="Step out to East Gate and survey the Haven-Cave route.",
                 result_hint="Opens the regional staging ground at East Gate.",
-            ),
-            ScreenAction(
-                "2",
+            )
+        )
+        for label, value, aliases, description, kind, preview, result_hint, risk in (
+            (
                 "Charter Office",
                 "town_charter",
                 ("c", "charter", "contracts"),
-                description="Contracts, upgrades, and records.",
-                kind=ScreenActionKind.TOWN,
-                preview="Review postings, filed records, and company infrastructure.",
-                result_hint="Accepting contracts, records, and upgrades happen inside.",
+                "Contracts, upgrades, and records.",
+                ScreenActionKind.TOWN,
+                "Review postings, filed records, and company infrastructure.",
+                "Accepting contracts, records, and upgrades happen inside.",
+                None,
             ),
-            ScreenAction(
-                "3",
+            (
                 "Company Yard",
                 "town_yard",
                 ("f", "formation", "party", "yard"),
-                description="Formation and roster.",
-                kind=ScreenActionKind.TOWN,
-                preview="Assign the active party and inspect heroes.",
-                result_hint="No resources are spent from the yard.",
+                "Formation and roster.",
+                ScreenActionKind.TOWN,
+                "Assign the active party and inspect heroes.",
+                "No resources are spent from the yard.",
+                None,
             ),
-            ScreenAction(
-                "4",
+            (
                 "Market Row",
                 "town_market",
                 ("m", "market", "supplies", "recruit"),
-                description="Quartermaster, recruitment, and armory.",
-                kind=ScreenActionKind.TOWN,
-                risk=ScreenActionRisk.COSTLY,
-                preview="Buy supplies, review recruits, or visit the armory.",
-                result_hint="Spending happens at individual counters.",
+                "Quartermaster, recruitment, and armory.",
+                ScreenActionKind.TOWN,
+                "Buy supplies, review recruits, or visit the armory.",
+                "Spending happens at individual counters.",
+                ScreenActionRisk.COSTLY,
             ),
-            ScreenAction(
-                "5",
+            (
                 "Recovery Ward",
                 "town_recovery",
                 ("w", "ward", "recover"),
-                description="Treatment and memorial.",
-                kind=ScreenActionKind.TOWN,
-                risk=ScreenActionRisk.COSTLY,
-                preview="Fund recovery or visit the memorial wall.",
-                result_hint="Recovery restores HP and Effort; Mortal Wounds remain.",
+                "Treatment and memorial.",
+                ScreenActionKind.TOWN,
+                "Fund recovery or visit the memorial wall.",
+                "Recovery restores HP and Effort; Mortal Wounds remain.",
+                ScreenActionRisk.COSTLY,
             ),
-            ScreenAction(
-                "6",
+            (
                 "System",
                 "system",
                 ("s",),
-                description="Save, load, help, or quit.",
-                kind=ScreenActionKind.SYSTEM,
-                preview="Manage save/load and application commands.",
+                "Save, load, help, or quit.",
+                ScreenActionKind.SYSTEM,
+                "Manage save/load and application commands.",
+                "",
+                None,
             ),
-        )
+        ):
+            actions.append(
+                ScreenAction(
+                    str(len(actions) + 1),
+                    label,
+                    value,
+                    aliases,
+                    description=description,
+                    kind=kind,
+                    risk=risk or ScreenActionRisk.LOW,
+                    preview=preview,
+                    result_hint=result_hint or "",
+                )
+            )
+        return tuple(actions)
 
     def _town_submenu_actions(
         self,
@@ -2641,23 +2639,7 @@ class CharterApp(App):
         )
 
     def _handle_deep_surgery_action(self, value: str) -> None:
-        if value == "back":
-            self._show_town_submenu("town_recovery")
-            return
-        if not value.startswith("surgery:"):
-            self._show_deep_surgery("Choose a listed hero.")
-            return
-        hero_id = value.removeprefix("surgery:")
-        result = self.controller.handle(PerformDeepSurgery(hero_id))
-        if result.success:
-            self._record_events(result.events)
-            self._show_town_submenu(
-                "town_recovery",
-                "Deep surgery complete.",
-                result.hci,
-            )
-        else:
-            self._show_deep_surgery(result.error or "Deep surgery is unavailable.")
+        self._town_handlers.handle_deep_surgery_action(value)
 
     def _show_supply_shop(self, message: str = "") -> None:
         if self.controller.company is None:
@@ -3210,6 +3192,7 @@ class CharterApp(App):
             preview=action.preview,
             result_hint=action.result_hint,
             confirm=action.confirm,
+            route_warning=action.route_warning,
         )
 
     def _show_expedition_report(
@@ -3419,9 +3402,9 @@ class CharterApp(App):
     def _post_combat_continue_label(self) -> str:
         if self.controller.manual_combat is not None:
             return "Next Command"
-        company = self.controller.company
         if self._breach_pending():
             return "Resolve Breach"
+        company = self.controller.company
         if company is not None and company.active_expedition is not None:
             return "Return to Dungeon"
         if company is not None and company.last_expedition_report is not None:
@@ -3441,6 +3424,7 @@ class CharterApp(App):
         if company is not None and company.last_expedition_report is not None:
             return "Return to the current place with the company record filed."
         return "Continue."
+
 
     def _show_breach(self, message: str = "") -> None:
         company = self.controller.company
@@ -3733,13 +3717,13 @@ class CharterApp(App):
             ),
             "resolution": ScreenDescriptor(
                 "resolution",
-                lambda _value: self._advance_resolution(),
+                lambda _value: self._combat_handlers.advance_resolution(),
                 self._blocked_resolution_back,
                 locked=True,
             ),
             "enemy_turn": ScreenDescriptor(
                 "enemy_turn",
-                lambda _value: self._advance_enemy_turn(),
+                lambda _value: self._combat_handlers.advance_enemy_turn(),
                 self._blocked_resolution_back,
                 locked=True,
             ),
@@ -3783,907 +3767,161 @@ class CharterApp(App):
         descriptor.activate(value)
 
     def _activate_combat_action(self, value: str) -> None:
-        if self.current_combat_phase == "command":
-            self._handle_combat_command(value)
-        elif self.current_combat_phase == "skill":
-            self._choose_skill(value)
-        elif self.current_combat_phase == "move":
-            self._choose_move(value)
-        elif self.current_combat_phase == "reaction":
-            self._choose_reaction(value)
-        else:
-            self._choose_target(value)
+        self._combat_handlers.activate_combat_action(value)
 
     def _advance_resolution(self) -> None:
-        if self.pending_enemy_events:
-            self._show_enemy_turn()
-        else:
-            self._finish_playback()
+        self._combat_handlers.advance_resolution()
 
     def _advance_enemy_turn(self) -> None:
-        if self.pending_enemy_beats:
-            self._show_enemy_turn()
-        else:
-            self.pending_enemy_events = []
-            self.pending_enemy_beats = []
-            self.pending_enemy_view = None
-            self._finish_playback()
+        self._combat_handlers.advance_enemy_turn()
 
     def _show_opening_enemy_response_if_needed(self) -> bool:
-        session = self.controller.manual_combat
-        if session is None:
-            return False
-        session_key = f"{session.encounter_id}:{id(session)}"
-        if self.opening_enemy_response_session_key == session_key:
-            return False
-
-        _hero_events, enemy_events = self._split_turn_events(list(session.event_log))
-        enemy_beats = self._enemy_response_beats(enemy_events)
-        if not enemy_beats:
-            self.opening_enemy_response_session_key = session_key
-            return False
-
-        result = self.controller.handle(ViewCombat())
-        if not result.success or not isinstance(result.value, CombatView):
-            return False
-
-        self.current_combat_view = result.value
-        self.current_combat_phase = "command"
-        self.pending_enemy_view = result.value
-        self.pending_enemy_beats = enemy_beats
-        self.pending_enemy_events = [event for beat in enemy_beats for event in beat]
-        self.pending_resolution_hci = None
-        self.opening_enemy_response_session_key = session_key
-        self._show_enemy_turn()
-        return True
+        return self._combat_handlers.show_opening_enemy_response_if_needed()
 
     def _handle_main_action(self, value: str) -> None:
-        if value == "start":
-            if self.controller.company is not None:
-                self._show_confirm(
-                    "replace_company",
-                    "Replace Company",
-                    "Starting a new company will replace the current in-memory company.",
-                    confirm_label="Replace Company",
-                    cancel_label="Keep Current",
-                    irreversible=True,
-                )
-            else:
-                self._show_name_prompt()
-        elif value == "continue":
-            self._show_current_place()
-        elif value == "saves":
-            self._show_save_load()
-        elif value == "gear":
-            self._show_gear_locker(return_to="main")
-        elif value == "load":
-            self._request_load_company()
-        elif value == "help":
-            self._show_help()
-        elif value == "quit":
-            self._show_confirm("quit", "Quit", "Close the charter desk?", confirm_label="Quit")
+        self._shell_handlers.handle_main_action(value)
 
     def _handle_system_action(self, value: str) -> None:
-        if value == "save":
-            if self.save_path.exists():
-                self._show_confirm(
-                    "overwrite_save",
-                    "Overwrite Save",
-                    f"Overwrite the save slot at {self.save_path}?",
-                    confirm_label="Overwrite",
-                    irreversible=True,
-                )
-            else:
-                self._save_company()
-        elif value == "load":
-            self._request_load_company()
-        elif value == "toggle_enemy_ai":
-            self.controller.enemy_ai_mode = _next_enemy_ai_mode(self.controller.enemy_ai_mode)
-            self._show_system(
-                f"Enemy AI set to {_enemy_ai_mode_label(self.controller.enemy_ai_mode)}."
-            )
-        elif value == "help":
-            self._show_help()
-        elif value == "quit":
-            self._show_confirm("quit", "Quit", "Close the charter desk?", confirm_label="Quit")
+        self._shell_handlers.handle_system_action(value)
 
     def _handle_company_action(self, value: str) -> None:
-        if value == "start":
-            if self.controller.company is not None:
-                self._show_confirm(
-                    "replace_company",
-                    "Replace Company",
-                    "Starting a new company will replace the current in-memory company.",
-                    confirm_label="Replace Company",
-                    cancel_label="Keep Current",
-                    irreversible=True,
-                )
-            else:
-                self._show_name_prompt()
-        elif value == "town":
-            self._show_town()
-        elif value == "roster":
-            self._show_roster()
-        elif value == "supplies":
-            self._show_supplies()
-        elif value == "ledger":
-            self._show_ledger()
+        self._shell_handlers.handle_company_action(value)
 
     def _handle_save_action(self, value: str) -> None:
-        if value == "save":
-            if self.save_path.exists():
-                self._show_confirm(
-                    "overwrite_save",
-                    "Overwrite Save",
-                    f"Overwrite the save slot at {self.save_path}?",
-                    confirm_label="Overwrite",
-                    irreversible=True,
-                )
-            else:
-                self._save_company()
-        elif value == "load":
-            self._request_load_company()
+        self._shell_handlers.handle_save_action(value)
 
     def _handle_town_action(self, value: str) -> None:
-        if value in {"east_gate", "travel"}:
-            company = self.controller.company
-            if company is not None:
-                from game.expedition.travel import (
-                    REGIONAL_EAST_GATE_NODE_ID,
-                    opening_nodes,
-                    set_company_node_location,
-                    set_regional_node_id,
-                )
-
-                set_regional_node_id(company, REGIONAL_EAST_GATE_NODE_ID)
-                set_company_node_location(
-                    company,
-                    opening_nodes(self.controller.definitions)[REGIONAL_EAST_GATE_NODE_ID],
-                )
-            self._show_regional_place(return_to="town")
-        elif value in {
-            "town_gate",
-            "town_charter",
-            "town_market",
-            "town_recovery",
-            "town_quartermaster",
-            "town_recruitment",
-            "town_yard",
-            "town_upgrades",
-            "town_records",
-        }:
-            self._show_town_submenu(value)
-        elif value == "map":
-            self._show_world_map()
-        elif value == "gear":
-            self._show_gear_locker(return_to="town_market")
-        elif value == "system":
-            self._show_system()
+        self._town_handlers.handle_town_action(value)
 
     def _handle_regional_place_action(self, value: str) -> None:
-        if value == "interact":
-            self._show_regional_interactions()
-            return
-        if value.startswith("action:"):
-            self._resolve_regional_action(value.removeprefix("action:"))
-            return
-        if value == "enter_haven":
-            company = self.controller.company
-            if company is not None:
-                from game.expedition.travel import set_company_location
-
-                set_company_location(company, "haven", "Haven Town")
-            self._show_town()
-            return
-        if value == "enter_cave":
-            self._begin_expedition(
-                skip_known_route_playback=True,
-                direct_to_dungeon=True,
-            )
-            return
-        if value == "mark_route":
-            result = self.controller.handle(MarkRegionalRoute())
-            if not result.success:
-                self._show_regional_place(result.error or "Could not mark the route.")
-                return
-            self._record_events(result.events)
-            notice = self._result_log_text(result.events, result.hci) or "Route charted."
-            self._show_regional_place(notice, result.hci, view=result.value)
-            return
-        if value in {"survey_route", "map"}:
-            self._show_regional_map()
-            return
-        if value == "world_map":
-            self._show_world_map(return_to="regional_place")
-            return
-        if value == "system":
-            self._show_system()
-            return
-        from game.expedition.travel import REGIONAL_OVERWORLD_NODE_IDS
-
-        if value in REGIONAL_OVERWORLD_NODE_IDS:
-            view = self.current_regional_view
-            if (
-                view is not None
-                and view.anchor_kind == "east_gate"
-                and not view.route_charted
-                and value == "old_road"
-            ):
-                self._begin_expedition(use_known_route=False)
-                return
-            self._handle_regional_walk(value)
-            return
-        self._show_regional_place("Choose a listed regional action.")
+        self._regional_handlers.handle_place_action(value)
 
     def _handle_regional_map_action(self, value: str) -> None:
-        if value == "back":
-            self._fold_roadbook()
-            return
-        if value == "begin_opening_route":
-            self._begin_expedition(use_known_route=False)
-            return
-        if value in {"haven", "shallow_cave"}:
-            self._handle_regional_travel(value)
-            return
-        from game.expedition.travel import REGIONAL_OVERWORLD_NODE_IDS
-
-        if value in REGIONAL_OVERWORLD_NODE_IDS:
-            self._handle_regional_walk(value)
-            return
-        self._show_regional_map("Choose a listed regional action.")
+        self._regional_handlers.handle_map_action(value)
 
     def _handle_regional_walk(self, node_id: str) -> None:
-        on_map = self.screen_state == "regional_map"
-        result = self.controller.handle(MoveRegional(node_id))
-        if not result.success:
-            if on_map:
-                self._show_regional_map(result.error or "Walk failed.")
-            else:
-                self._show_regional_place(result.error or "Walk failed.")
-            return
-        self._record_events(result.events)
-        if self.controller.manual_combat is not None:
-            self._start_playback(result.events, result.hci)
-            return
-        travel_view = cast(RegionalMapView, result.value)
-        message = f"Arrived at {travel_view.current_node_name}."
-        if self._regional_move_lands_on_place(travel_view, result.events):
-            self._show_regional_place(message, result.hci, view=travel_view)
-        elif on_map:
-            self._show_regional_map(message, result.hci, view=travel_view)
-        else:
-            self._show_regional_place(message, result.hci, view=travel_view)
+        self._regional_handlers.handle_walk(node_id)
 
     def _regional_move_lands_on_place(
         self,
         view: RegionalMapView,
         events: Sequence[GameEvent],
     ) -> bool:
-        from game.expedition.travel import (
-            regional_move_lands_on_place,
-            regional_overworld_nodes,
-        )
-
-        first_visit = any(
-            isinstance(event, ExpeditionEvent) and event.first_visit for event in events
-        )
-        nodes = regional_overworld_nodes(self.controller.definitions)
-        node = nodes[view.current_node_id]
-        return regional_move_lands_on_place(node, first_visit=first_visit)
+        return self._regional_handlers.move_lands_on_place(view, events)
 
     def _available_regional_room_action_commands(
         self,
         view: RegionalMapView,
     ) -> tuple[ScreenAction, ...]:
-        return tuple(
-            ScreenAction(
-                str(index),
-                room_action.label,
-                f"action:{room_action.action_id}",
-                (room_action.action_id,),
-                enabled=room_action.state == "available",
-                description=room_action.description,
-                kind=ScreenActionKind.DUNGEON,
-                risk=ScreenActionRisk.COSTLY if room_action.cost else ScreenActionRisk.LOW,
-                cost=quantity_detail(room_action.cost),
-                unavailable_reason=room_action_state_reason(room_action),
-                preview=room_action_preview(room_action),
-                result_hint=room_action_result_hint(room_action),
-            )
-            for index, room_action in enumerate(
-                (
-                    room_action
-                    for room_action in view.room_actions
-                    if room_action.state == "available"
-                ),
-                start=1,
-            )
-        )
+        return self._regional_handlers.available_room_action_commands(view)
 
     def _show_regional_interactions(self, message: str = "") -> None:
-        view = self.current_regional_view
-        if view is None:
-            result = self.controller.handle(ViewRegionalMap())
-            if not result.success:
-                self._show_regional_place(result.error or "Regional map unavailable.")
-                return
-            view = cast(RegionalMapView, result.value)
-            self.current_regional_view = view
-        commands = self._available_regional_room_action_commands(view)
-        if not commands:
-            self._show_regional_place(message or "Nothing here needs handling.")
-            return
-        actions = tuple(
-            self._renumbered_action(command, index, default=False)
-            for index, command in enumerate(commands, start=1)
-        )
-        actions = (
-            *actions,
-            ScreenAction(str(len(actions) + 1), "Back to Place", "back", ("b",)),
-        )
-        render_view = build_regional_render_view(view)
-        self._show_screen(
-            "regional_interact",
-            "Interact",
-            self._regional_place_text(view),
-            actions,
-            message=message,
-            log=self._regional_log_text(render_view, None, actions=actions),
-        )
+        self._regional_handlers.show_interactions(message)
 
     def _resolve_regional_action(self, action_id: str) -> None:
-        return_state = self.screen_state
-        result = self.controller.handle(UseRegionalAction(action_id))
-        if not result.success:
-            if return_state == "regional_interact":
-                self._show_regional_interactions(result.error or "Room action failed.")
-            else:
-                self._show_regional_place(result.error or "Room action failed.")
-            return
-        self._record_events(result.events)
-        notice = self._room_action_notice(result.events)
-        travel_view = cast(RegionalMapView, result.value)
-        if return_state == "regional_map":
-            self._show_regional_map(notice, result.hci, view=travel_view)
-        else:
-            self._show_regional_place(notice, result.hci, view=travel_view)
+        self._regional_handlers.resolve_action(action_id)
 
     def _handle_regional_interaction_action(self, value: str) -> None:
-        if value.startswith("action:"):
-            self._resolve_regional_action(value.removeprefix("action:"))
-            return
-        self._show_regional_interactions("Choose a listed regional action.")
+        self._regional_handlers.handle_interaction_action(value)
 
     def _handle_regional_travel(self, destination_id: str) -> None:
-        result = self.controller.handle(TravelRegional(destination_id))
-        if result.success:
-            self._record_events(result.events)
-            travel_view = cast(RegionalMapView, result.value)
-            self._show_regional_place(
-                result.events[0].message
-                if result.events
-                else f"Travelled to {self._place_name(destination_id)}.",
-                result.hci,
-                view=travel_view,
-            )
-        elif self.screen_state == "regional_map":
-            self._show_regional_map(result.error or "Travel failed.")
-        else:
-            self._show_regional_place(result.error or "Travel failed.")
+        self._regional_handlers.handle_travel(destination_id)
 
     def _back_from_regional_place(self) -> None:
-        if self.pending_regional_return_state == "town":
-            company = self.controller.company
-            if company is not None:
-                from game.expedition.travel import set_company_location
-
-                set_company_location(company, "haven", "Haven Town")
-            self._show_town()
-            return
-        self._show_current_place()
+        self._regional_handlers.back_from_place()
 
     def _fold_roadbook(self) -> None:
-        self._show_regional_place(
-            "The roadbook is folded away. The gate returns: mud, lanterns, wagon ruts."
-        )
+        self._regional_handlers.fold_roadbook()
 
     def _back_from_world_map(self) -> None:
-        if self.pending_world_map_return_state == "regional_place":
-            self._show_regional_place()
-            return
-        self._show_current_place()
+        self._regional_handlers.back_from_world_map()
 
     def _handle_pack_action(self, value: str) -> None:
-        if value == "gear":
-            self._show_gear_locker(return_to="pack")
-        else:
-            self._show_pack("Choose a listed pack action.")
+        self._town_handlers.handle_pack_action(value)
 
     def _handle_company_summary_action(self, value: str) -> None:
-        if value == "formation":
-            self._show_formation(return_to="company")
-        elif value == "gear":
-            self._show_gear_locker(return_to="company")
-        elif value.startswith("hero:"):
-            self._show_hero_sheet(value.removeprefix("hero:"), return_to="company")
-        else:
-            self._show_company_summary("Choose a listed company action.")
+        self._town_handlers.handle_company_summary_action(value)
 
     def _handle_town_submenu_action(self, value: str) -> None:
-        if value in {
-            "town_gate",
-            "town_charter",
-            "town_market",
-            "town_recovery",
-            "town_quartermaster",
-            "town_recruitment",
-            "town_yard",
-            "town_upgrades",
-            "town_records",
-        }:
-            self._show_town_submenu(value)
-            return
-        if value == "regional_map":
-            self._show_regional_place(return_to="town_gate")
-            return
-        if value == "travel":
-            self._show_regional_place(return_to="town_gate")
-            return
-        elif value == "map":
-            self._show_world_map()
-            return
-        elif value == "gear":
-            self._show_gear_locker(return_to="town_market")
-            return
-        if value == "expedition":
-            self._show_expedition()
-        elif value == "recruit":
-            self._show_recruiting()
-        elif value == "recover":
-            result = self.controller.handle(RecoverCompany())
-            if result.success:
-                self._record_events(result.events)
-                self._show_town_submenu(
-                    "town_recovery",
-                    "Company recovery funded.",
-                    result.hci,
-                )
-            else:
-                self._show_town_submenu("town_recovery", result.error or "Recovery is unavailable.")
-        elif value == "deep_surgery":
-            self._show_deep_surgery()
-        elif value == "buy":
-            self._show_supply_shop()
-        elif value == "relic_broker":
-            self._show_relic_broker()
-        elif value == "formation":
-            self._show_formation(return_to="town_yard")
-        elif value == "memorial":
-            self._show_memorial()
-        elif value == "roster":
-            self._show_roster()
-        elif value == "ledger":
-            self._show_ledger()
-        elif value == "latest_record":
-            self._show_expedition_report()
-        elif value.startswith("upgrade:"):
-            upgrade_id = value.removeprefix("upgrade:")
-            result = self.controller.handle(PurchaseUpgrade(upgrade_id))
-            if result.success:
-                self._record_events(result.events)
-                self._show_town_submenu("town_upgrades", "Upgrade installed.", result.hci)
-            else:
-                self._show_town_submenu(
-                    "town_upgrades",
-                    result.error or "Upgrade unavailable.",
-                )
-        elif value.startswith("accept:"):
-            contract_id = value.removeprefix("accept:")
-            result = self.controller.handle(AcceptContract(contract_id))
-            if result.success:
-                self._record_events(result.events)
-                self._show_town_submenu("town_charter", "Contract accepted.", result.hci)
-            else:
-                self._show_town_submenu(
-                    "town_charter",
-                    result.error or "Contract is unavailable.",
-                )
+        self._town_handlers.handle_town_submenu_action(value)
 
     def _handle_roster_action(self, value: str) -> None:
-        if value.startswith("hero:"):
-            hero_id = value.removeprefix("hero:")
-            self._show_hero_sheet(hero_id, return_to="roster")
-        else:
-            self._show_roster("Choose a listed hero.")
+        self._town_handlers.handle_roster_action(value)
 
     def _handle_gear_action(self, value: str) -> None:
-        if value.startswith("gear:buy:"):
-            gear_id = value.removeprefix("gear:buy:")
-            result = self.controller.handle(PurchaseGear(gear_id))
-        elif value.startswith("gear:equip:"):
-            _prefix, _equip, hero_id, gear_id = value.split(":", 3)
-            result = self.controller.handle(EquipGear(hero_id, gear_id))
-        elif value.startswith("gear:unequip:"):
-            hero_id = value.removeprefix("gear:unequip:")
-            result = self.controller.handle(UnequipGear(hero_id))
-        else:
-            self._show_gear_locker(
-                "Choose a listed gear action.",
-                return_to=self.pending_gear_locker_return_state,
-            )
-            return
-        if result.success:
-            self._record_events(result.events)
-            self._show_gear_locker(
-                "Armory updated.",
-                return_to=self.pending_gear_locker_return_state,
-            )
-        else:
-            self._show_gear_locker(
-                result.error or "Gear action unavailable.",
-                return_to=self.pending_gear_locker_return_state,
-            )
+        self._town_handlers.handle_gear_action(value)
 
     def _handle_hero_sheet_action(self, value: str) -> None:
-        if value == "memories":
-            self._show_hero_memories()
-            return
-        if value == "gear":
-            self._show_hero_gear()
-            return
-        self._show_hero_sheet(
-            message="Choose a listed sheet section.",
-            return_to=self.pending_gear_return_state,
-        )
+        self._town_handlers.handle_hero_sheet_action(value)
 
     def _handle_hero_gear_action(self, value: str) -> None:
-        if value.startswith("gear:equip:"):
-            _prefix, _equip, hero_id, gear_id = value.split(":", 3)
-            result = self.controller.handle(EquipGear(hero_id, gear_id))
-        elif value.startswith("gear:unequip:"):
-            hero_id = value.removeprefix("gear:unequip:")
-            result = self.controller.handle(UnequipGear(hero_id))
-        else:
-            self._show_hero_gear(message="Choose a listed gear action.")
-            return
-        if result.success:
-            self._record_events(result.events)
-            self._show_hero_gear(
-                message="Equipment updated.",
-            )
-        else:
-            self._show_hero_gear(
-                message=result.error or "Equipment action unavailable.",
-            )
+        self._town_handlers.handle_hero_gear_action(value)
 
     def _back_from_hero_sheet(self) -> None:
-        if self.pending_gear_return_state == "pack":
-            self._show_pack()
-        elif self.pending_gear_return_state == "company":
-            self._show_company_summary()
-        else:
-            self._show_roster()
+        self._town_handlers.back_from_hero_sheet()
 
     def _back_from_hero_memories(self) -> None:
-        self._show_hero_sheet(return_to=self.pending_gear_return_state)
+        self._town_handlers.back_from_hero_memories()
 
     def _back_from_hero_gear(self) -> None:
-        self._show_hero_sheet(return_to=self.pending_gear_return_state)
+        self._town_handlers.back_from_hero_gear()
 
     def _back_from_gear_locker(self) -> None:
-        if self.pending_gear_locker_return_state == "pack":
-            self._show_pack()
-        elif self.pending_gear_locker_return_state == "company":
-            self._show_company_summary()
-        elif self.pending_gear_locker_return_state == "main":
-            self._show_main()
-        else:
-            self._show_town_submenu("town_market")
+        self._town_handlers.back_from_gear_locker()
 
     def _back_from_formation(self) -> None:
-        if self.pending_formation_return_state == "company":
-            self._show_company_summary()
-        else:
-            self._show_town_submenu("town_yard")
+        self._town_handlers.back_from_formation()
 
     def _back_from_assign_hero(self) -> None:
-        self._show_formation(return_to=self.pending_formation_return_state)
+        self._town_handlers.back_from_assign_hero()
 
     def _handle_recruiting_action(self, value: str) -> None:
-        if value == "hire":
-            self._show_recruiting_hire()
-            return
+        self._town_handlers.handle_recruiting_action(value)
 
     def _handle_recruiting_hire_action(self, value: str) -> None:
-        result = self.controller.handle(HireRecruit(int(value)))
-        if result.success:
-            self._record_events(result.events)
-            self._show_recruiting_hire("Recruit hired.", result.hci)
-            return
-        self._show_recruiting_hire(result.error or "Recruiting failed.")
+        self._town_handlers.handle_recruiting_hire_action(value)
 
     def _handle_supply_action(self, value: str) -> None:
-        if value == "buy_supplies":
-            self._show_supply_buy()
-            return
+        self._town_handlers.handle_supply_action(value)
 
     def _handle_supply_buy_action(self, value: str) -> None:
-        result = self.controller.handle(BuySupply(value))
-        if result.success:
-            self._record_events(result.events)
-            self._show_supply_buy("Supply purchased.", result.hci)
-        else:
-            self._show_supply_buy(result.error or "Purchase failed.")
+        self._town_handlers.handle_supply_buy_action(value)
 
     def _handle_relic_broker_action(self, value: str) -> None:
-        if value.startswith("sell_loot:"):
-            result = self.controller.handle(SellLoot(value.removeprefix("sell_loot:")))
-        elif value.startswith("turn_in_loot:"):
-            result = self.controller.handle(TurnInLoot(value.removeprefix("turn_in_loot:")))
-        else:
-            self._show_relic_broker("Choose a listed relic action.")
-            return
-        if result.success:
-            self._record_events(result.events)
-            self._show_relic_broker(
-                result.events[-1].message if result.events else "Relic clerk transaction complete.",
-                result.hci,
-            )
-        else:
-            self._show_relic_broker(result.error or "Relic clerk transaction failed.")
+        self._town_handlers.handle_relic_broker_action(value)
 
     def _handle_playback_action(self, value: str) -> None:
-        if value == "continue":
-            self.playback_index += 1
-            self._show_playback()
+        self._dungeon_handlers.handle_playback_action(value)
 
     def _handle_dungeon_action(self, value: str) -> None:
-        if value == "map":
-            self._show_dungeon_map()
-            return
-        if value == "interact":
-            self._show_dungeon_interactions()
-            return
-        if value == "inspect":
-            result = self.controller.handle(InspectDungeonRoom())
-            if result.success:
-                self._record_events(result.events)
-                self._show_dungeon("Room inspected.", result.hci)
-            else:
-                self._show_dungeon(result.error or "Inspection failed.")
-            return
-        if value == "return":
-            result = self.controller.handle(ReturnFromDungeon())
-            if result.success:
-                self._record_events(result.events)
-                if isinstance(result.value, RegionalMapView):
-                    self._show_regional_place(hci=result.hci, view=result.value)
-                elif isinstance(result.value, ExpeditionReportView):
-                    self._show_report_view(result.value, hci=result.hci)
-                else:
-                    self._start_playback(result.events, result.hci)
-            else:
-                self._show_dungeon(result.error or "Return is unavailable.")
-            return
-        if value == "enter_generated_maze":
-            result = self.controller.handle(EnterGeneratedMaze())
-            if result.success:
-                self._record_events(result.events)
-                self._start_playback(result.events, result.hci)
-            else:
-                self._show_dungeon(result.error or "Breach entry failed.")
-            return
-        if value == "retrace_generated_maze":
-            result = self.controller.handle(RetraceGeneratedMaze())
-            if result.success:
-                self._record_events(result.events)
-                self._start_playback(result.events, result.hci)
-            else:
-                self._show_dungeon(result.error or "Maze retrace failed.")
-            return
-        if value == "withdraw_generated_maze":
-            result = self.controller.handle(WithdrawGeneratedMaze())
-            if result.success:
-                self._record_events(result.events)
-                self._start_playback(result.events, result.hci)
-            else:
-                self._show_dungeon(result.error or "Maze withdrawal failed.")
-            return
-        if value == "retreat_generated_maze":
-            result = self.controller.handle(RetreatGeneratedMaze())
-            if result.success:
-                self._record_events(result.events)
-                self._start_playback(result.events, result.hci)
-            else:
-                self._show_dungeon(result.error or "Maze retrace failed.")
-            return
-        if value.startswith("action:"):
-            result = self.controller.handle(UseDungeonAction(value.removeprefix("action:")))
-            if result.success:
-                self._record_events(result.events)
-                self._show_dungeon(self._room_action_notice(result.events), result.hci)
-            else:
-                self._show_dungeon(result.error or "Room action failed.")
-            return
-        result = self.controller.handle(MoveDungeon(value))
-        if result.success:
-            self._record_events(result.events)
-            self._start_playback(result.events, result.hci)
-        else:
-            self._show_dungeon(result.error or "Move failed.")
+        self._dungeon_handlers.handle_dungeon_action(value)
 
     def _handle_dungeon_interaction_action(self, value: str) -> None:
-        if value.startswith("action:"):
-            result = self.controller.handle(UseDungeonAction(value.removeprefix("action:")))
-            if result.success:
-                self._record_events(result.events)
-                self._show_dungeon(self._room_action_notice(result.events), result.hci)
-            else:
-                self._show_dungeon_interactions(result.error or "Room action failed.")
-            return
-        self._show_dungeon()
+        self._dungeon_handlers.handle_dungeon_interaction_action(value)
 
     def _handle_report_action(self, value: str) -> None:
-        if value == "town":
-            self._show_current_place()
-        elif value == "roster":
-            self._show_roster()
-        elif value == "recover":
-            result = self.controller.handle(RecoverCompany())
-            if result.success:
-                self._record_events(result.events)
-                self._show_expedition_report("Company recovery funded.", result.hci)
-            else:
-                self._show_expedition_report(result.error or "Recovery is unavailable.")
-        elif value == "save":
-            if self.save_path.exists():
-                self._show_confirm(
-                    "overwrite_save",
-                    "Overwrite Save",
-                    f"Overwrite the save slot at {self.save_path}?",
-                    confirm_label="Overwrite",
-                    irreversible=True,
-                )
-            else:
-                self._save_company()
+        self._dungeon_handlers.handle_report_action(value)
 
     def _handle_breach_action(self, value: str) -> None:
-        if value == "return_to_haven":
-            result = self.controller.handle(TakeExpeditionChoice(value))
-            if result.success:
-                self._record_events(result.events)
-                self._start_playback(result.events, result.hci)
-            else:
-                self._show_breach(result.error or "Could not return to Haven.")
-        elif value == "descend_maze_depth_1":
-            self._show_confirm(
-                "descend_maze_depth_1",
-                "Descend",
-                "Descend into Maze Depth 1?",
-                confirm_label="Descend",
-            )
+        self._dungeon_handlers.handle_breach_action(value)
 
     def _handle_confirm_action(self, value: str) -> None:
-        if value == "cancel":
-            self._cancel()
-            return
-        if self.pending_confirm == "quit":
-            result = self.controller.handle(Quit())
-            self._record_events(result.events)
-            self.exit()
-        elif self.pending_confirm == "replace_company":
-            self.pending_confirm = None
-            self._show_name_prompt()
-        elif self.pending_confirm == "overwrite_save":
-            self.pending_confirm = None
-            self._save_company()
-        elif self.pending_confirm == "load_company":
-            self.pending_confirm = None
-            self._load_company()
-        elif self.pending_confirm == "descend_maze_depth_1":
-            self.pending_confirm = None
-            result = self.controller.handle(TakeExpeditionChoice("descend_maze_depth_1"))
-            if result.success:
-                self._record_events(result.events)
-                self._start_playback(result.events, result.hci)
-            else:
-                self._show_breach(result.error or "Could not descend.")
+        self._shell_handlers.handle_confirm_action(value)
 
     def _handle_combat_command(self, value: str) -> None:
-        view = self.current_combat_view
-        if value == "skill":
-            if view is None:
-                self._show_combat_skill()
-            else:
-                self._show_combat_view(view, phase="skill")
-            return
-        if value == "move":
-            if view is None:
-                self._show_combat_command("Move options are unavailable.")
-            else:
-                self._show_combat_view(view, phase="move")
-            return
-        if value == "pass":
-            result = self.controller.handle(PassCombatTurn())
-            if not result.success:
-                self._show_combat_command(result.error or "Pass failed.")
-                return
-            self.current_combat_view = cast(CombatView | None, result.value)
-            self._show_resolution(result.events, result.hci)
-            return
-        if value == "delay":
-            result = self.controller.handle(DelayCombatTurn())
-            if not result.success:
-                self._show_combat_command(result.error or "Delay failed.")
-                return
-            self.current_combat_view = cast(CombatView | None, result.value)
-            self._show_resolution(result.events, result.hci)
-            return
-        if value == "retreat":
-            result = self.controller.handle(RetreatCombat())
-            if not result.success:
-                self._show_combat_command(result.error or "Retreat failed.")
-                return
-            self.current_combat_view = None
-            self._show_resolution(result.events, result.hci)
-            return
-        self._show_combat_command("Choose a listed combat command.")
+        self._combat_handlers.handle_combat_command(value)
 
     def _choose_skill(self, skill_id: str) -> None:
-        result = self.controller.handle(ChooseCombatSkill(skill_id))
-        if not result.success:
-            self._show_combat_skill(result.error or "Choose a listed skill.")
-            return
-        view = cast(CombatView, result.value)
-        self._show_combat_target(view)
+        self._combat_handlers.choose_skill(skill_id)
 
     def _choose_move(self, slot_id: str) -> None:
-        try:
-            to_slot = FormationSlot(slot_id)
-        except ValueError:
-            self._show_combat_command("Choose a listed movement option.")
-            return
-        result = self.controller.handle(MoveCombatActor(to_slot))
-        if not result.success:
-            view_result = self.controller.handle(ViewCombat())
-            if view_result.success and isinstance(view_result.value, CombatView):
-                self._show_combat_view(
-                    view_result.value,
-                    phase="move",
-                    message=result.error or "Move failed.",
-                )
-            else:
-                self._show_combat_command(result.error or "Move failed.")
-            return
-        self.current_combat_view = cast(CombatView | None, result.value)
-        self._show_resolution(result.events, result.hci)
+        self._combat_handlers.choose_move(slot_id)
 
     def _choose_reaction(self, value: str) -> None:
-        reaction_id = None if value == "skip" else value
-        result = self.controller.handle(ResolveCombatReaction(reaction_id))
-        if not result.success:
-            self._show_combat_command(result.error or "Choose a listed reaction.")
-            return
-        self.current_combat_view = cast(CombatView | None, result.value)
-        self._show_resolution(result.events, result.hci)
+        self._combat_handlers.choose_reaction(value)
 
     def _choose_target(self, target_id: str) -> None:
-        skill_id = self.selected_skill_id
-        if skill_id is None:
-            self._show_combat_skill("Choose a skill first.")
-            return
-        target_result = self.controller.handle(ChooseCombatTarget(target_id))
-        if not target_result.success:
-            view = self.current_combat_view
-            if view is not None:
-                self._show_combat_target(view, target_result.error or "Choose a listed target.")
-            return
-        result = self.controller.handle(ResolveCombatAction(skill_id, target_id))
-        if not result.success:
-            self._show_combat_skill(result.error or "The action could not resolve.")
-            return
-        self.current_combat_view = cast(CombatView | None, result.value)
-        self._show_resolution(result.events, result.hci)
+        self._combat_handlers.choose_target(target_id)
 
     def _assign_hero(self, hero_id: str) -> None:
         if self.pending_slot is None:
@@ -4779,44 +4017,31 @@ class CharterApp(App):
             return
         descriptor.back()
 
+    def _breach_pending(self) -> bool:
+        company = self.controller.company
+        return bool(
+            company is not None
+            and company.active_expedition is None
+            and company.flags.get(BREACH_PENDING_FLAG, False)
+        )
+
     def _back_from_help(self) -> None:
-        if self.pending_help_return_state == "current_place":
-            self.pending_help_return_state = "system"
-            self._show_current_place()
-            return
-        if self.controller.company is None:
-            self._show_main()
-        else:
-            self._show_system()
+        self._shell_handlers.back_from_help()
 
     def _back_from_recruiting_hire(self) -> None:
-        view = self._current_recruiting_view()
-        if view is None:
-            self._show_town_submenu("town_market")
-        else:
-            self._render_recruiting_view(view)
-
-    def _blocked_breach_back(self) -> None:
-        self._show_breach("Resolve Return or Descend before leaving this breach.")
+        self._town_handlers.back_from_recruiting_hire()
 
     def _blocked_dungeon_back(self) -> None:
-        self._show_dungeon("Use Return from a safe room to leave the dungeon.")
+        self._dungeon_handlers.blocked_dungeon_back()
+
+    def _blocked_breach_back(self) -> None:
+        self._dungeon_handlers.blocked_breach_back()
 
     def _blocked_resolution_back(self) -> None:
-        self.message = "Combat resolution is already in motion."
-        self._render()
+        self._combat_handlers.blocked_resolution_back()
 
     def _back_from_combat(self) -> None:
-        if self.current_combat_phase == "target":
-            self._show_combat_skill()
-        elif self.current_combat_phase in {"skill", "move"}:
-            self._show_combat_command()
-        elif self.current_combat_phase == "reaction":
-            self.message = "Choose a reaction or Skip Reaction to resolve the enemy intent."
-            self._render()
-        else:
-            self.message = "Use Retreat to leave combat from a safe dungeon fight."
-            self._render()
+        self._combat_handlers.back_from_combat()
 
     def _show_screen(
         self,
@@ -5123,7 +4348,7 @@ class CharterApp(App):
         return "\n".join(
             (
                 action.result_hint or "Accept this posting.",
-                f"Risk: {risk_label(action)} - charter only; no route starts here.",
+                "Charter only; no route starts here.",
             )
         )
 
@@ -5177,9 +4402,6 @@ class CharterApp(App):
 
     def _is_safe_default(self, action: ScreenAction) -> bool:
         return action.risk not in UNSAFE_DEFAULT_RISKS
-
-    def _risk_label(self, action: ScreenAction) -> str:
-        return risk_label(action)
 
     def _kind_label(self, action: ScreenAction) -> str:
         return kind_label(action)
@@ -5662,12 +4884,7 @@ class CharterApp(App):
                 lines.append("Clear this room before moving.")
         else:
             detail_lines = [
-                line
-                for line in (
-                    _route_warning_line(exit_node),
-                    _route_expectation(exit_node),
-                )
-                if line
+                line for line in (_route_warning_line(exit_node),) if line
             ]
             if detail_lines:
                 lines.extend(("", *detail_lines))
@@ -5774,7 +4991,7 @@ class CharterApp(App):
         lines = ["Contract Focus", "", action.label]
         if action.description:
             lines.append(action.description)
-        lines.append(format_meta_line(f"Risk: {risk_label(action)}", "Charter only"))
+        lines.append("Charter only")
         if hotkey:
             lines.append(f"Hotkey: {hotkey}")
         if not action.enabled:
@@ -6136,11 +5353,3 @@ class CharterApp(App):
             )
             lines.append(f"{marker} {actor.slot}: {detail}")
         return "\n".join(lines)
-
-    def _breach_pending(self) -> bool:
-        company = self.controller.company
-        return bool(
-            company is not None
-            and company.active_expedition is None
-            and company.flags.get(BREACH_PENDING_FLAG, False)
-        )

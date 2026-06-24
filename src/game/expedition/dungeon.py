@@ -57,15 +57,18 @@ from game.expedition.travel import (
     apply_node_rewards,
     complete_contract_at_node,
     event_for_node,
+    get_regional_node_id,
     node_event,
     opening_nodes,
     regional_node_id_for_safe_return,
     regional_node_id_for_world_location,
+    regional_overworld_nodes,
     regional_return_flavor,
     set_company_location,
     set_company_node_location,
     set_regional_node_id,
     spend_ration,
+    unlock_known_route_for_node,
     world_location_id_for_node,
 )
 
@@ -375,6 +378,47 @@ def finish_shallow_cave_boss(
     return events
 
 
+def open_opening_breach_room(
+    company: CompanyState,
+    definitions: GameDefinitions,
+) -> list[GameEvent]:
+    session = company.active_expedition
+    if session is not None:
+        if session.current_node_id == SHALLOW_CAVE_BREACH_NODE_ID:
+            company.flags[OPENING_BREACH_PENDING_FLAG] = True
+            return []
+        return finish_shallow_cave_boss(company, definitions)
+
+    nodes = opening_nodes(definitions)
+    breach_node = nodes[SHALLOW_CAVE_BREACH_NODE_ID]
+    events = [
+        event_for_node(breach_node),
+        *apply_node_rewards(company, breach_node, definitions),
+    ]
+    report = ExpeditionReportState(
+        expedition_id=OPENING_EXPEDITION_ID,
+        dungeon_id=SHALLOW_CAVE_DUNGEON_ID,
+    )
+    capture_report_start(company, report)
+    record_room(report, breach_node.id, breach_node.name)
+    record_events(report, events)
+    company.active_expedition = ExpeditionSessionState(
+        expedition_id=OPENING_EXPEDITION_ID,
+        dungeon_id=SHALLOW_CAVE_DUNGEON_ID,
+        current_node_id=breach_node.id,
+        visited_node_ids=[breach_node.id],
+        cleared_node_ids=[breach_node.id],
+        report=report,
+    )
+    company.flags[OPENING_BREACH_PENDING_FLAG] = True
+    set_company_node_location(company, breach_node)
+    _remember_visit(company, company.active_expedition, breach_node.id)
+    _remember_world_discovery(company, company.active_expedition, breach_node)
+    _remember_clear(company, company.active_expedition, breach_node.id)
+    _remember_world_clear(company, company.active_expedition, breach_node)
+    return events
+
+
 def enter_generated_maze(
     company: CompanyState,
     definitions: GameDefinitions,
@@ -633,7 +677,15 @@ def return_from_dungeon(
     if report is not None:
         record_events(report, [event])
     finish_report(company, outcome)
-    return [event]
+    events: list[GameEvent] = [event]
+    if outcome != "defeat":
+        regional_nodes = regional_overworld_nodes(definitions)
+        regional_node_id = get_regional_node_id(company)
+        if regional_node_id in regional_nodes:
+            events.extend(
+                unlock_known_route_for_node(company, regional_nodes[regional_node_id])
+            )
+    return events
 
 
 def descend_from_interactive_breach(

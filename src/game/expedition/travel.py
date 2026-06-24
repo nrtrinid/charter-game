@@ -209,6 +209,33 @@ def regional_available_exit_ids(
     )
 
 
+def regional_known_exit_ids_by_node(
+    definitions: GameDefinitions,
+    known_ids: set[str],
+    memory: DungeonMemoryState | None,
+) -> dict[str, tuple[str, ...]]:
+    """Map-display exits between known regional nodes (ignores walk unlock rules)."""
+    nodes = regional_overworld_nodes(definitions)
+    result: dict[str, tuple[str, ...]] = {}
+    for node_id in known_ids:
+        if node_id not in nodes:
+            continue
+        exit_ids = list(
+            dict.fromkeys(
+                [
+                    *nodes[node_id].exits,
+                    *_memory_revealed_exit_node_ids(memory, node_id),
+                ]
+            )
+        )
+        result[node_id] = tuple(
+            exit_id
+            for exit_id in exit_ids
+            if exit_id in known_ids and exit_id in nodes
+        )
+    return result
+
+
 def _regional_node_cleared(
     company: CompanyState,
     node_id: str,
@@ -276,6 +303,7 @@ def move_regional_node(
     events: list[GameEvent] = [
         event_for_node(destination, first_visit=first_visit),
         *apply_node_rewards(company, destination, definitions),
+        *unlock_known_route_for_node(company, destination),
     ]
     if destination.encounter is not None and not _regional_node_cleared(
         company,

@@ -3273,9 +3273,9 @@ async def test_tui_hci_safe_focus_and_disabled_reason_contract(tmp_path: Path) -
         assert recruit.unavailable_reason
         assert "Need" in recruit.unavailable_reason
         detail = app._detail_text()
-        assert "Risk: Costly" in detail
         assert "Cost:" in detail
         assert "Need" in detail
+        assert "Risk:" not in detail
 
         await pilot.press(recruit.number)
         await pilot.pause()
@@ -3657,7 +3657,6 @@ async def test_tui_golden_path_transcript_has_stage_cues(tmp_path: Path) -> None
 
     assert states == ["town", "playback", "dungeon", "combat"]
     assert "Stage Focus" in details
-    assert "Risk:" in details
     assert "Preview" in details
     assert "Command Focus" in details
 
@@ -3694,7 +3693,7 @@ async def test_tui_known_route_opens_cave_entrance_then_dungeon(tmp_path: Path) 
         assert "Destination: Shallow Cave." in detail
         assert "Route: charted road." in detail
         assert "Cost: 1 ration when available" in detail
-        assert "Risk: Low" in detail
+        assert "Risk:" not in detail
         assert "Skips cleared Old Road beats." in detail
         assert "No new discoveries on this route." in detail
         await pilot.press(charted_hop.number)
@@ -4124,7 +4123,7 @@ async def test_tui_opening_expedition_reaches_manual_combat_and_resolves_turn(
             await pilot.pause()
         if had_enemy_response:
             assert enemy_screens_seen >= 1
-        assert app.screen_state in {"combat", "dungeon", "breach", "expedition_report"}
+        assert app.screen_state in {"combat", "dungeon", "expedition_report"}
 
 
 @pytest.mark.anyio
@@ -4140,7 +4139,9 @@ async def test_tui_dungeon_enter_activates_focused_route(tmp_path: Path) -> None
         assert app.focused_action.default
         route_detail = app._detail_text()
         assert "Old Road" in route_detail
-        assert "North - Unexplored" in route_detail
+        assert "North" in route_detail
+        assert "Unexplored" not in route_detail
+        assert "Cleared" not in route_detail
         assert "Risk:" not in route_detail
         assert "Threat:" not in route_detail
         assert "Kind:" not in route_detail
@@ -4244,8 +4245,9 @@ async def test_tui_dungeon_focus_shows_concrete_route_preview(tmp_path: Path) ->
         detail = app._detail_text()
 
         assert "Old Road" in detail
-        assert "North - Unexplored" in detail
-        assert "Expect a new room, obstacle, or discovery." in detail
+        assert "North" in detail
+        assert "Unexplored" not in detail
+        assert "Expect a new room, obstacle, or discovery." not in detail
         assert detail.count("Old Road") == 1
         assert "Risk:" not in detail
         assert "Threat:" not in detail
@@ -4279,8 +4281,9 @@ def test_tui_dungeon_hazard_route_avoids_generic_visible_risk() -> None:
     detail = app._dungeon_detail_text(route_action)
 
     assert "Narrow Crawl" in detail
-    assert "South - Unexplored" in detail
-    assert "Expect a new room, obstacle, or discovery." in detail
+    assert "South" in detail
+    assert "Unexplored" not in detail
+    assert "Expect a new room, obstacle, or discovery." not in detail
     assert "Risk: Caution" not in detail
     assert "Risk:" not in detail
     assert "Threat: Hazard" not in detail
@@ -4306,11 +4309,13 @@ def test_tui_dungeon_boss_route_keeps_exceptional_warning() -> None:
     detail = app._dungeon_detail_text(route_action)
 
     assert "Maze-Touched Lair" in detail
-    assert "South - Unexplored - Boss" in detail
+    assert "South - Boss" in detail
+    assert "Unexplored" not in detail
     assert "Warning: serious danger ahead." in detail
     assert "Risk:" not in detail
     assert "Threat:" not in detail
     assert route_action.risk == "risky"
+    assert route_action.route_warning is True
     assert not app._is_safe_default(route_action)
     dock = CommandDock.render_text(app._dungeon_navigation_actions(result.value), 2)
     assert "!Maze-Touched Lair" in dock
@@ -4503,11 +4508,13 @@ async def test_tui_dungeon_safe_return_shows_arrival_brief(tmp_path: Path) -> No
         assert app.controller.company is not None
         assert app.controller.company.last_expedition_report is not None
         assert app.controller.company.town_state["regional_node_id"] == "town_gate"
-        assert any(action.value == "enter_haven" for action in app.actions)
-
-        app._show_town_submenu("town_records")
-        assert any(action.value == "latest_record" for action in app.actions)
-        app._handle_town_submenu_action("latest_record")
+        record_action = next(
+            action for action in app.actions if action.value == "latest_record"
+        )
+        assert record_action.label == "Read Filed Record"
+        assert record_action.default
+        await pilot.press(record_action.number)
+        await pilot.pause()
         assert app.screen_state == "expedition_report"
         assert "Filed Company Record" in app.body_text
         assert "Outcome: Returned To Haven" in app.body_text

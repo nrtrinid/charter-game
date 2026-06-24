@@ -38,6 +38,7 @@ from game.app.commands import (
     RetreatCombat,
     RetreatGeneratedMaze,
     ReturnFromDungeon,
+    ReturnToHavenTown,
     SaveGame,
     SelectTarget,
     SellLoot,
@@ -63,6 +64,7 @@ from game.app.commands import (
     ViewSupplies,
     ViewTown,
     ViewWorld,
+    VisitEastGate,
     WithdrawGeneratedMaze,
 )
 from game.app.flows import DungeonFlow, ExpeditionFlow, ManualCombatFlow, TownFlow
@@ -143,6 +145,8 @@ class AppController:
                 TravelRegional,
                 MoveRegional,
                 MarkRegionalRoute,
+                VisitEastGate,
+                ReturnToHavenTown,
                 UseRegionalAction,
                 ViewMemorial,
                 GenerateRecruitOffers,
