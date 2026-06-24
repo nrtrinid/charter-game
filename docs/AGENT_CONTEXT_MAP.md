@@ -7,9 +7,34 @@ Task router for agent sessions. **Do not duplicate `AGENTS.md`.**
 ## How to use
 
 1. Read `AGENTS.md` once per session.
-2. Pick the matching block below (or use path triggers).
-3. Read only **READ_FIRST** + **LIKELY_FILES** before editing.
-4. Run **VERIFY** before handoff; escalate to `.\rtk.ps1 check` + `.\rtk.ps1 all` for cross-cutting work.
+2. Run `.\rtk.ps1 preflight` for git snapshot and task-block guess (or
+   `.\rtk.ps1 scout --task "…"` for multi-model Stage 1).
+3. Pick the matching block below (or use path triggers).
+4. Read only **READ_FIRST** + **LIKELY_FILES** before editing.
+5. Run the block **VERIFY** commands; use `.\rtk.ps1 boundaries` when engine
+   packages change.
+6. Run `.\rtk.ps1 review-packet` before handoff; escalate to `.\rtk.ps1 check`
+   + `.\rtk.ps1 all` for cross-cutting work.
+7. Run `.\rtk.ps1 help` for the full task list.
+
+**Primary:** `.\rtk.ps1 <task>` (uses `.venv` on Windows when present).
+**Fallback:** `uv run pytest` / `uv run ruff` / `python -m …` only when `rtk` is
+unavailable.
+
+Standard session surface:
+
+```powershell
+.\rtk.ps1 help
+.\rtk.ps1 preflight
+.\rtk.ps1 scout --task "one-line task"
+.\rtk.ps1 boundaries
+.\rtk.ps1 review-packet
+.\rtk.ps1 quick
+.\rtk.ps1 all
+```
+
+On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`help`, `preflight`,
+`scout`, `boundaries`, `review-packet`, `smoke`, `quick`, `test`, `check`).
 
 ## Path triggers (first match wins)
 

@@ -39,6 +39,14 @@ still require explicit user approval.
 - 2026-06-16 - CI runs `.\rtk.ps1 boundaries` after lint/type checks.
 - 2026-06-23 - Added `docs/STANDARDIZED_AGENT_ERGONOMICS_ROADMAP.md` (cross-repo
   ergonomics contract); linked from `AGENTS.md`; Phase 1 marked complete.
+- 2026-06-23 - Aligned `AGENTS.md`, `README.md`, and `docs/AGENT_CONTEXT_MAP.md`
+  on the same RTK contract (`help`, `preflight`, `scout`, `boundaries`,
+  `review-packet`, `quick`, `all`); ergonomics Phase 2 marked complete.
+
+### Changed
+
+- 2026-06-23 - Agent docs prefer `.\rtk.ps1` over raw `uv run pytest` / `ruff` /
+  `mypy`; `uv` and `python -m` remain documented fallbacks when `rtk` is unavailable.
 
 ### Fixed
 

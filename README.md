@@ -152,15 +152,32 @@ To save the demo result:
 python -m game.main --demo --save saves/demo.json
 ```
 
-## Test
+## Agent toolkit
 
-```bash
-uv run pytest
-uv run ruff check
-uv run mypy src
+Agents: read `AGENTS.md` and `docs/AGENT_CONTEXT_MAP.md` before broad exploration.
+
+**Primary:** `.\rtk.ps1 <task>` (uses `.venv` on Windows when present).
+**Fallback:** `uv run pytest` / `uv run ruff` / `python -m …` only when `rtk` is
+unavailable.
+
+Standard session surface:
+
+```powershell
+.\rtk.ps1 help
+.\rtk.ps1 preflight
+.\rtk.ps1 scout --task "one-line task"
+.\rtk.ps1 boundaries
+.\rtk.ps1 review-packet
+.\rtk.ps1 quick
+.\rtk.ps1 all
 ```
 
-On Windows, the repo toolkit uses the local `.venv` when present:
+On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`help`, `preflight`,
+`scout`, `boundaries`, `review-packet`, `smoke`, `quick`, `test`, `check`).
+
+## Test
+
+Prefer `.\rtk.ps1` so commands use the local `.venv` when present:
 
 ```powershell
 .\rtk.ps1 smoke
@@ -171,11 +188,22 @@ On Windows, the repo toolkit uses the local `.venv` when present:
 .\rtk.ps1 all
 ```
 
+See **Agent toolkit** above for session commands (`preflight`, `scout`,
+`boundaries`, `review-packet`, `help`).
+
 Long TUI and full-suite runs can exceed 5 minutes. If your runner lets you set a
 command timeout, use a value above 5 minutes for `.\rtk.ps1 tui`, `.\rtk.ps1 all`,
 or broad `pytest` runs so they are not killed while still making normal progress.
 
-Fallback:
+Fallback (no rtk):
+
+```bash
+uv run pytest
+uv run ruff check
+uv run mypy src
+```
+
+If `uv` is unavailable:
 
 ```bash
 python -m pytest

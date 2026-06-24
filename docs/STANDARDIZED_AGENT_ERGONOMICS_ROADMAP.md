@@ -87,6 +87,8 @@ Acceptance:
 - `AGENTS.md`, `README.md`, and `docs/AGENT_CONTEXT_MAP.md` all point to the same command surface.
 - Any future helper should either become an `rtk.ps1` task or stay clearly optional.
 
+**Status:** complete (2026-06-23).
+
 ### Phase 3 - Normalize Context Map Headings
 
 Keep task blocks in a consistent shape:
@@ -127,10 +129,9 @@ Acceptance:
 
 ## Local Next Steps
 
-1. Fix UTF-8 encoding on wrapper docs and `.agentignore`.
-2. Patch and test the preflight first-path parser bug.
-3. Decide whether to add `.\rtk.ps1 doctor` or keep freshness inside `preflight`.
-4. Normalize new context-map blocks as they are added.
+1. Normalize new context-map blocks to the Phase 3 heading shape as they are added.
+2. Decide whether to add `.\rtk.ps1 doctor` or keep freshness inside `preflight`.
+3. Implement Phase 4 minimum freshness checks (broken links, dangerous files, stale commands, missing boundaries run).
 
 ## Definition Of Done
 

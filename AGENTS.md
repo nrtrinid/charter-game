@@ -14,9 +14,10 @@
   instead of pasting them into context.
 - Do not inspect virtualenvs, caches, build output, coverage output, or generated
   artifacts unless the task specifically requires it.
-- Run focused tests first, such as `uv run pytest tests/test_cli.py -q` or
-  `uv run pytest tests/test_cli.py::test_name -q`; run the full suite only for
-  broad changes or final verification.
+- Run focused tests first, such as `.\rtk.ps1 test tests/test_cli.py` or
+  `.\rtk.ps1 test tests/test_cli.py::test_name`; run the full suite only for
+  broad changes or final verification. If `rtk` is unavailable, fall back to
+  `uv run pytest` with the same path or node.
 - On Windows, prefer `.\rtk.ps1 preflight` at session start (or `--verify` /
   `--boundaries` before handoff), then `.\rtk.ps1 smoke`, `.\rtk.ps1 quick`,
   `.\rtk.ps1 tui`, `.\rtk.ps1 test <path-or-node>`, `.\rtk.ps1 check`,
@@ -65,7 +66,8 @@
 
 ## Dev Tools Index
 
-Dev-only balance and route research. Run from `dungeon-party-game/`:
+Dev-only balance and route research (optional; not part of the standard agent
+loop). Run from `dungeon-party-game/`:
 
 ```bash
 uv run python -m game.dev.ai_lab <subcommand> [options]
@@ -92,25 +94,39 @@ Supporting modules (`design_diagnosis`, `hero_policy_audit`, `encounter_attribut
 `breach_balance_lab`) are libraries consumed by the commands above and their tests —
 not separate CLIs.
 
-## Commands
+## RTK contract
 
-Run before considering work complete:
+**Primary:** `.\rtk.ps1 <task>` (uses `.venv` on Windows when present).
+**Fallback:** `uv run pytest` / `uv run ruff` / `python -m …` only when `rtk` is
+unavailable.
+
+Standard agent session surface (also listed in `README.md` and
+`docs/AGENT_CONTEXT_MAP.md`):
+
+```powershell
+.\rtk.ps1 help
+.\rtk.ps1 preflight
+.\rtk.ps1 scout --task "one-line task"
+.\rtk.ps1 boundaries
+.\rtk.ps1 review-packet
+.\rtk.ps1 quick
+.\rtk.ps1 all
+```
+
+On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`help`, `preflight`,
+`scout`, `boundaries`, `review-packet`, `smoke`, `quick`, `test`, `check`).
+
+Additional tasks: `setup`, `smoke`, `tui`, `test [args]`, `lint`, `types`,
+`check`, and `preflight --verify` (check + focused tests). Run
+`.\rtk.ps1 help` for the full list.
+
+### Fallback (no rtk)
 
 ```bash
-./rtk.ps1 help
-./rtk.ps1 scout --task "one-line task"
-./rtk.ps1 preflight
-./rtk.ps1 preflight --verify
-./rtk.ps1 boundaries
-./rtk.ps1 review-packet
-./rtk.ps1 all
 uv run pytest
 uv run ruff check
 uv run mypy src
 ```
-
-On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`preflight`, `scout`,
-`boundaries`, `smoke`, `quick`, `test`, `check`, `review-packet`, `help`).
 
 If `uv` is unavailable:
 
@@ -208,6 +224,9 @@ python -m mypy src
 - 2026-06-15 - Multi-model workflow: `.\rtk.ps1 scout --task` plus
   `prompts/agent_workflow.md`, `scout_packet_schema.md`, `drift_check_prompt.md`,
   and `implement_from_plan.md` (scout → drift gate → implement).
+- 2026-06-23 - RTK contract: `AGENTS.md`, `README.md`, and
+  `docs/AGENT_CONTEXT_MAP.md` document the same `rtk.ps1` / `rtk.sh` surface;
+  prefer `.\rtk.ps1` over raw `uv run` for tests and checks.
 
 ## Source of Truth
 
@@ -216,7 +235,7 @@ Documentation hierarchy (agent and handoff):
 1. `AGENTS.md` — canonical rules, workflow, durable memory, dev-tool index
 2. `docs/AGENT_CONTEXT_MAP.md` — task router (READ_FIRST / VERIFY per ticket type)
 3. `docs/STANDARDIZED_AGENT_ERGONOMICS_ROADMAP.md` — cross-repo ergonomics phases
-   and acceptance criteria (Charter Phase 1 complete)
+   and acceptance criteria (Charter Phases 1–2 complete)
 4. `project_sources/` — curated handoff pack; cross-link `AGENTS.md`, do not fork
    architecture rules into duplicate encyclopedias
 5. `project_sources/CURRENT_STATE.md` — snapshot only; verify test counts and
