@@ -111,6 +111,8 @@ Acceptance:
 - New task blocks follow this shape.
 - Existing blocks that are touched for other reasons are normalized opportunistically.
 
+**Status:** complete (2026-06-23).
+
 ### Phase 4 - Add Lightweight Freshness Checks
 
 Decide whether freshness checks belong in a new `doctor` task or inside preflight.
@@ -129,9 +131,8 @@ Acceptance:
 
 ## Local Next Steps
 
-1. Normalize new context-map blocks to the Phase 3 heading shape as they are added.
-2. Decide whether to add `.\rtk.ps1 doctor` or keep freshness inside `preflight`.
-3. Implement Phase 4 minimum freshness checks (broken links, dangerous files, stale commands, missing boundaries run).
+1. Decide whether to add `.\rtk.ps1 doctor` or keep freshness inside `preflight`.
+2. Implement Phase 4 minimum freshness checks (broken links, dangerous files, stale commands, missing boundaries run).
 
 ## Definition Of Done
 

@@ -67,6 +67,8 @@ Same as Stage 1 but without `.\rtk.ps1 scout` bundle - prefer scout command inst
 
 ## Block quick reference
 
+In-repo blocks use the same field names in `docs/AGENT_CONTEXT_MAP.md`.
+
 | Block | Use when |
 |---|---|
 | `combat-rules` | Skills, targeting, formation, enemy AI, manual combat |

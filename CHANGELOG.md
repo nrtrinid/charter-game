@@ -42,6 +42,9 @@ still require explicit user approval.
 - 2026-06-23 - Aligned `AGENTS.md`, `README.md`, and `docs/AGENT_CONTEXT_MAP.md`
   on the same RTK contract (`help`, `preflight`, `scout`, `boundaries`,
   `review-packet`, `quick`, `all`); ergonomics Phase 2 marked complete.
+- 2026-06-23 - Normalized all `docs/AGENT_CONTEXT_MAP.md` task blocks to the
+  Phase 3 field schema (`Use when`, plain labels, `NOTES`); ergonomics Phase 3
+  marked complete.
 
 ### Changed
 

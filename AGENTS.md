@@ -227,6 +227,9 @@ python -m mypy src
 - 2026-06-23 - RTK contract: `AGENTS.md`, `README.md`, and
   `docs/AGENT_CONTEXT_MAP.md` document the same `rtk.ps1` / `rtk.sh` surface;
   prefer `.\rtk.ps1` over raw `uv run` for tests and checks.
+- 2026-06-23 - Normalized all `docs/AGENT_CONTEXT_MAP.md` task blocks to the
+  Phase 3 schema (`Use when`, plain field labels, `NOTES`); ergonomics Phase 3
+  marked complete.
 
 ## Source of Truth
 
@@ -235,7 +238,7 @@ Documentation hierarchy (agent and handoff):
 1. `AGENTS.md` — canonical rules, workflow, durable memory, dev-tool index
 2. `docs/AGENT_CONTEXT_MAP.md` — task router (READ_FIRST / VERIFY per ticket type)
 3. `docs/STANDARDIZED_AGENT_ERGONOMICS_ROADMAP.md` — cross-repo ergonomics phases
-   and acceptance criteria (Charter Phases 1–2 complete)
+   and acceptance criteria (Charter Phases 1–3 complete)
 4. `project_sources/` — curated handoff pack; cross-link `AGENTS.md`, do not fork
    architecture rules into duplicate encyclopedias
 5. `project_sources/CURRENT_STATE.md` — snapshot only; verify test counts and
