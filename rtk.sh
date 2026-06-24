@@ -32,6 +32,7 @@ Tasks (minimum set):
   test [args]      Run pytest (args forwarded)
   check            Run ruff check + mypy src
   review-packet    Print lightweight review packet (Markdown)
+  doctor           Read-only handoff freshness checks
   help             Show this help
 EOF
 }
@@ -64,6 +65,9 @@ case "$task" in
     ;;
   review-packet)
     "$python_bin" -m game.dev.agent_review_packet "$@"
+    ;;
+  doctor)
+    "$python_bin" -m game.dev.agent_doctor "$@"
     ;;
   *)
     echo "Unknown task: $task" >&2

@@ -62,12 +62,14 @@ function Show-Help {
     Write-Output "  scout [args]   Preflight scout bundle (--scout)"
     Write-Output "  boundaries     Fail if engine packages import game.ui"
     Write-Output "  review-packet  Print lightweight review packet (Markdown)"
+    Write-Output "  doctor         Read-only handoff freshness checks"
     Write-Output ""
     Write-Output "Examples:"
     Write-Output '  .\rtk.ps1 preflight'
     Write-Output '  .\rtk.ps1 scout --task "One-line task"'
     Write-Output '  .\rtk.ps1 boundaries'
     Write-Output '  .\rtk.ps1 review-packet'
+    Write-Output '  .\rtk.ps1 doctor'
 }
 
 switch ($Task) {
@@ -127,6 +129,10 @@ switch ($Task) {
     }
     "review-packet" {
         Invoke-PythonModule "game.dev.agent_review_packet" $Rest
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+    "doctor" {
+        Invoke-PythonModule "game.dev.agent_doctor" $Rest
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     default {

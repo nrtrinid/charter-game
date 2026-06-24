@@ -167,13 +167,14 @@ Standard session surface:
 .\rtk.ps1 preflight
 .\rtk.ps1 scout --task "one-line task"
 .\rtk.ps1 boundaries
+.\rtk.ps1 doctor
 .\rtk.ps1 review-packet
 .\rtk.ps1 quick
 .\rtk.ps1 all
 ```
 
 On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`help`, `preflight`,
-`scout`, `boundaries`, `review-packet`, `smoke`, `quick`, `test`, `check`).
+`scout`, `boundaries`, `doctor`, `review-packet`, `smoke`, `quick`, `test`, `check`).
 
 ## Test
 
@@ -189,7 +190,7 @@ Prefer `.\rtk.ps1` so commands use the local `.venv` when present:
 ```
 
 See **Agent toolkit** above for session commands (`preflight`, `scout`,
-`boundaries`, `review-packet`, `help`).
+`boundaries`, `doctor`, `review-packet`, `help`).
 
 Long TUI and full-suite runs can exceed 5 minutes. If your runner lets you set a
 command timeout, use a value above 5 minutes for `.\rtk.ps1 tui`, `.\rtk.ps1 all`,

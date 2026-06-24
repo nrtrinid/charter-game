@@ -89,6 +89,7 @@ uv run python -m game.dev.train_enemy_ai [options]
 | `agent_preflight --scout` | Stage 1 bundle for cheap scout model (`.\rtk.ps1 scout`) | `tests/test_agent_preflight.py` |
 | `check_engine_boundaries` | Scan engine packages for forbidden `game.ui` imports | `tests/test_agent_preflight.py` |
 | `agent_review_packet` | Handoff review packet (`.\rtk.ps1 review-packet`) | `tests/test_agent_review_packet.py` |
+| `agent_doctor` | Read-only freshness checks (`.\rtk.ps1 doctor`) | `tests/test_agent_doctor.py` |
 
 Supporting modules (`design_diagnosis`, `hero_policy_audit`, `encounter_attribution`,
 `breach_balance_lab`) are libraries consumed by the commands above and their tests —
@@ -108,17 +109,33 @@ Standard agent session surface (also listed in `README.md` and
 .\rtk.ps1 preflight
 .\rtk.ps1 scout --task "one-line task"
 .\rtk.ps1 boundaries
+.\rtk.ps1 doctor
 .\rtk.ps1 review-packet
 .\rtk.ps1 quick
 .\rtk.ps1 all
 ```
 
 On Unix shells, `./rtk.sh` mirrors the minimum toolkit (`help`, `preflight`,
-`scout`, `boundaries`, `review-packet`, `smoke`, `quick`, `test`, `check`).
+`scout`, `boundaries`, `doctor`, `review-packet`, `smoke`, `quick`, `test`, `check`).
 
 Additional tasks: `setup`, `smoke`, `tui`, `test [args]`, `lint`, `types`,
 `check`, and `preflight --verify` (check + focused tests). Run
 `.\rtk.ps1 help` for the full list.
+
+## Handoff template
+
+For non-trivial work, close with this shape (also printed by `.\rtk.ps1 review-packet`):
+
+```markdown
+Changed:
+Tests:
+Docs:
+Risks:
+Did not touch:
+Next safe step:
+```
+
+Run `.\rtk.ps1 doctor` before handoff for advisory freshness warnings.
 
 ### Fallback (no rtk)
 
@@ -230,6 +247,9 @@ python -m mypy src
 - 2026-06-23 - Normalized all `docs/AGENT_CONTEXT_MAP.md` task blocks to the
   Phase 3 schema (`Use when`, plain field labels, `NOTES`); ergonomics Phase 3
   marked complete.
+- 2026-06-23 - Handoff: `.\rtk.ps1 doctor` (advisory freshness) then
+  `.\rtk.ps1 review-packet`; close non-trivial turns with the six-part template
+  in `AGENTS.md` Handoff template section.
 
 ## Source of Truth
 
@@ -238,7 +258,7 @@ Documentation hierarchy (agent and handoff):
 1. `AGENTS.md` — canonical rules, workflow, durable memory, dev-tool index
 2. `docs/AGENT_CONTEXT_MAP.md` — task router (READ_FIRST / VERIFY per ticket type)
 3. `docs/STANDARDIZED_AGENT_ERGONOMICS_ROADMAP.md` — cross-repo ergonomics phases
-   and acceptance criteria (Charter Phases 1–3 complete)
+   and acceptance criteria (Charter Phases 1–4 complete)
 4. `project_sources/` — curated handoff pack; cross-link `AGENTS.md`, do not fork
    architecture rules into duplicate encyclopedias
 5. `project_sources/CURRENT_STATE.md` — snapshot only; verify test counts and

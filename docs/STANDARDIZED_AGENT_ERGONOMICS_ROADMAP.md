@@ -44,7 +44,8 @@ Known friction (Phase 1 complete 2026-06-23):
 
 - Wrapper `AGENTS.md` and `README.md` plus `.agentignore` are UTF-8 on disk (wrapper files are local-only, outside `charter-game` git).
 - Preflight uses `parse_status_path` so porcelain lines are not strip-misaligned (`src/` vs `rc/`).
-- There is no separate doctor command yet; some freshness checks are folded into preflight and manual docs discipline.
+- `.\rtk.ps1 doctor` provides read-only handoff freshness checks (broken doc
+  links, dangerous touched paths, stale rtk references, boundaries reminder).
 
 ## Roadmap
 
@@ -129,10 +130,11 @@ Acceptance:
 - Agents have one obvious read-only command for repo freshness before handoff.
 - The command warns without making ordinary iteration heavy.
 
+**Status:** complete (2026-06-23).
+
 ## Local Next Steps
 
-1. Decide whether to add `.\rtk.ps1 doctor` or keep freshness inside `preflight`.
-2. Implement Phase 4 minimum freshness checks (broken links, dangerous files, stale commands, missing boundaries run).
+- Cross-repo ergonomics sync with `life-harness` and `ev-tracker` (optional).
 
 ## Definition Of Done
 

@@ -17,6 +17,8 @@ def test_review_packet_prints_sections(tmp_path: Path) -> None:
     assert "## Git status" in output
     assert "## Diffstat" in output
     assert "## Suggested context blocks" in output
+    assert "## Doctor / freshness" in output
+    assert "## Handoff template" in output
     assert "## Next step" in output
 
 

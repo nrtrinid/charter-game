@@ -45,6 +45,9 @@ still require explicit user approval.
 - 2026-06-23 - Normalized all `docs/AGENT_CONTEXT_MAP.md` task blocks to the
   Phase 3 field schema (`Use when`, plain labels, `NOTES`); ergonomics Phase 3
   marked complete.
+- 2026-06-23 - Added `.\rtk.ps1 doctor` (`src/game/dev/agent_doctor.py`) for
+  read-only handoff freshness checks; six-part handoff template in `AGENTS.md`
+  and `review-packet`; ergonomics Phase 4 marked complete.
 
 ### Changed
 

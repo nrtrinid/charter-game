@@ -7,8 +7,16 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from game.dev.agent_doctor import FreshnessFinding, collect_freshness_findings
 from game.dev.agent_preflight import collect_git_snapshot, collect_report_context
 from game.dev.check_engine_boundaries import project_root_from_here
+
+HANDOFF_TEMPLATE = """Changed:
+Tests:
+Docs:
+Risks:
+Did not touch:
+Next safe step:"""
 
 
 @dataclass(frozen=True)
@@ -40,6 +48,17 @@ def format_list(lines: list[str]) -> str:
     return "\n".join(f"- {line}" for line in lines)
 
 
+def format_findings(findings: list[FreshnessFinding]) -> str:
+    if not findings:
+        return "- (none)"
+    lines: list[str] = []
+    for finding in findings:
+        first_line = finding.message.splitlines()[0]
+        prefix = finding.level.upper()
+        lines.append(f"- [{prefix}] {first_line}")
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Print a lightweight review packet (Markdown).")
     parser.add_argument(
@@ -55,7 +74,9 @@ def main(argv: list[str] | None = None) -> int:
     diffstat = run_git(project_root, "diff", "--stat")
 
     snapshot = collect_git_snapshot(project_root)
+    changed_paths = snapshot.changed_paths if snapshot else ()
     context = collect_report_context(project_root, snapshot)
+    freshness = list(collect_freshness_findings(project_root, changed_paths))
 
     suggested_blocks = list(context.blocks)
     suggested_tests = list(context.suggested_tests)
@@ -96,13 +117,27 @@ def main(argv: list[str] | None = None) -> int:
     print(format_list([w.splitlines()[0] for w in warnings]))
     print()
 
+    print("## Doctor / freshness")
+    print()
+    print(format_findings(freshness))
+    print()
+
     print("## Skipped checks")
     print()
-    print("- (none; this command does not run tests, lint, types, or boundaries)")
+    print("- Doctor is advisory only; it does not run pytest, ruff, mypy, or boundaries.")
+    print("- Run `.\\rtk.ps1 doctor` separately for a full freshness report.")
+    print()
+
+    print("## Handoff template")
+    print()
+    print("```markdown")
+    print(HANDOFF_TEMPLATE)
+    print("```")
     print()
 
     print("## Next step")
     print()
+    print("- Run: `.\\rtk.ps1 doctor` then fill the handoff template above.")
     if suggested_tests:
         test_args = " ".join(suggested_tests)
         print(f"- Run: `.\\rtk.ps1 check` and `.\\rtk.ps1 test {test_args}`")
