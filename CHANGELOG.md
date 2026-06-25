@@ -51,6 +51,9 @@ still require explicit user approval.
 
 ### Changed
 
+- 2026-06-24 - Split expedition memory behavior from `memory.py` into flat
+  `memory_*` modules (capture, event signals, signals policy, post-expedition,
+  manifestation, archive, util); facade preserves `from game.campaign.memory import …`.
 - 2026-06-24 - Split monolithic `tui_widgets.py` into the `tui_widgets/` package
   (shell, town, dungeon, combat, animation, constants, plus shared `events.py` and
   `formation.py`); barrel `__init__.py` preserves `from game.ui.tui_widgets import …`.
