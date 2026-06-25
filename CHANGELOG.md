@@ -12,6 +12,8 @@ still require explicit user approval.
 
 ## Unreleased
 
+## [0.2.0] - 2026-06-25
+
 ### Added
 
 - 2026-06-15 - Added workspace-root agent pointers (`text-adventure/AGENTS.md`,
@@ -48,9 +50,19 @@ still require explicit user approval.
 - 2026-06-23 - Added `.\rtk.ps1 doctor` (`src/game/dev/agent_doctor.py`) for
   read-only handoff freshness checks; six-part handoff template in `AGENTS.md`
   and `review-packet`; ergonomics Phase 4 marked complete.
+- 2026-06-25 - Added `ai_oracle.py` and `oracle-report` AI lab command for
+  score-only heuristic audits, route envelope diagnostics, and counterplay
+  metrics; covered by `tests/test_ai_oracle.py`.
 
 ### Changed
 
+- 2026-06-24 - Split `views.py` into the `views/` package and `flows.py` into
+  `flows/` with barrel re-exports; no consumer import churn.
+- 2026-06-24 - Split campaign save hub types into `*_state.py` modules,
+  `hero_state.py`, `serde_helpers.py`, and `migrations.py`; `company.py` slimmed
+  to factory/helpers.
+- 2026-06-24 - Routed TUI regional travel through app commands (ADR-003) and
+  extracted dispatch into `tui_handlers/`.
 - 2026-06-24 - Split expedition memory behavior from `memory.py` into flat
   `memory_*` modules (capture, event signals, signals policy, post-expedition,
   manifestation, archive, util); facade preserves `from game.campaign.memory import …`.
