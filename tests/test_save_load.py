@@ -22,6 +22,7 @@ from game.campaign.hero_memory import (
     FreshMemoryState,
     RecentSignal,
 )
+from game.campaign.migrations import upgrade_raw_save
 from game.campaign.save_load import load_company, save_company
 from game.combat.combat_state import LifeState, StrainMark, StrainTier, Tag
 from tests.conftest import get_definitions
@@ -296,6 +297,28 @@ def test_old_hero_state_fields_migrate_to_life_tags_and_strain() -> None:
     assert migrated.earned_quirk_slots == [
         EarnedQuirkSlotState("blood_hot", STABILITY_SETTLED, 1)
     ]
+
+
+def test_upgrade_raw_save_fills_missing_coin_fields() -> None:
+    upgraded = upgrade_raw_save(
+        {
+            "company_id": "company_001",
+            "name": "Haven Charter",
+            "roster": [],
+            "supplies": {},
+            "expedition_reports": [
+                {
+                    "expedition_id": "opening",
+                    "dungeon_id": "shallow_cave",
+                }
+            ],
+        }
+    )
+
+    assert upgraded["coin"] == STARTING_COIN
+    assert upgraded["expedition_reports"][0]["coin_gained"] == 0
+    assert upgraded["expedition_reports"][0]["start_coin"] == 0
+    assert upgraded["expedition_reports"][0]["end_coin"] == 0
 
 
 def test_app_load_missing_save_returns_failure(tmp_path: Path) -> None:

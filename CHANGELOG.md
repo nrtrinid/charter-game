@@ -51,6 +51,13 @@ still require explicit user approval.
 
 ### Changed
 
+- 2026-06-24 - Split monolithic `tui_widgets.py` into the `tui_widgets/` package
+  (shell, town, dungeon, combat, animation, constants, plus shared `events.py` and
+  `formation.py`); barrel `__init__.py` preserves `from game.ui.tui_widgets import …`.
+- 2026-06-24 - Extracted TUI screen rendering from `tui.py` into `tui_render/`
+  (shell, regional, town, dungeon, combat) mirroring the Slice 2 handler split;
+  shared constants/helpers moved to `tui_constants.py`; `CharterApp` keeps thin
+  delegates and the screen pipeline.
 - 2026-06-23 - Agent docs prefer `.\rtk.ps1` over raw `uv run pytest` / `ruff` /
   `mypy`; `uv` and `python -m` remain documented fallbacks when `rtk` is unavailable.
 
