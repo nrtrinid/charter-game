@@ -136,6 +136,9 @@ python -m mypy src
 
 ## Durable Memory
 
+- 2026-10-04 - ML research datasets live under `src/game/ml`, use versioned
+  candidate feature schemas and explicit top-level seed splits, and consume simulator
+  decision traces instead of duplicating combat rules.
 - 2026-06-05 - The Textual TUI is the default game experience. Treat CLI as a
   legacy/dev fallback and avoid polishing it as a second equal frontend unless
   explicitly requested.

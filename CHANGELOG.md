@@ -12,6 +12,10 @@ still require explicit user approval.
 
 ## Unreleased
 
+### Added
+
+- 2026-10-04 - Added a dev-only ML research foundation with a versioned 39-feature enemy-decision schema, grouped deterministic decision datasets, disjoint seed-level train/validation/test splits, reproducible provenance manifests, and focused leakage/determinism tests.
+
 ### Fixed
 
 - 2026-06-11 - Kept generated Maze branches, previews, and seamless forward
