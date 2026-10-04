@@ -136,6 +136,10 @@ python -m mypy src
 
 ## Durable Memory
 
+- 2026-10-04 - Future enemy-policy optimization should treat simulator kits/rules as
+  legal constraints and optimize combat success rather than rewarding authored archetype
+  behavior; signature/combo usage belongs in telemetry, and prescriptive engineered ML
+  features must be audited before win-optimization experiments.
 - 2026-10-04 - ML research datasets live under `src/game/ml`, use versioned
   candidate feature schemas and explicit top-level seed splits, and consume simulator
   decision traces instead of duplicating combat rules.

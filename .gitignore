@@ -27,6 +27,7 @@ saves/*.json
 # Local scratch and generated lab output
 _wb.py
 ai_lab_*.txt
+artifacts/ml/
 project_sources_upload_pack.zip
 RESUME_EVIDENCE_BANK.md
 

@@ -14,6 +14,9 @@ still require explicit user approval.
 
 ### Added
 
+- 2026-10-04 - Added the supervised ML candidate-ranking research pipeline with
+  train-only normalization, same-objective linear and small MLP scorers, sealed
+  held-out evaluation, deterministic artifact reloads, and paired simulator rollouts.
 - 2026-10-04 - Added a dev-only ML research foundation with a versioned 39-feature enemy-decision schema, grouped deterministic decision datasets, disjoint seed-level train/validation/test splits, reproducible provenance manifests, and focused leakage/determinism tests.
 
 ### Fixed

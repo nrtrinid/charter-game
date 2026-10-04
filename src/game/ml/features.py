@@ -50,6 +50,43 @@ ENEMY_DECISION_FEATURE_NAMES: tuple[str, ...] = (
     "role_flavor",
 )
 
+# Research metadata mirror of the production scorer's intentional
+# "learning-only" distinction. This is explicit here so experiments do not
+# import a private combat implementation constant at runtime.
+LEARNING_ONLY_FEATURE_NAMES: tuple[str, ...] = (
+    "maw_grab_setup",
+    "maw_bite_payoff",
+    "boss_guard_package",
+    "target_has_heal_skill",
+    "target_has_recovery_skill",
+    "target_has_support_skill",
+    "target_has_effort_for_support",
+    "target_is_support_actor",
+    "target_is_backline_support",
+    "grab_disrupts_support_actor",
+    "grab_action_tax_value",
+    "grab_target_has_not_acted",
+    "grab_creates_support_denial",
+    "maw_grab_high_value_support",
+    "maw_grab_down_threat",
+    "maw_grab_bite_expected_collapse",
+    "bandit_mark_kill_lane",
+    "bandit_marked_attack",
+    "bandit_marked_payoff",
+    "bandit_ignored_marked_legal",
+    "mark_ally_reach_count",
+    "mark_expected_followup_damage",
+    "mark_payoff_attacker_count",
+    "mark_acts_before_target_count",
+    "mark_followup_can_down",
+    "mark_target_low_hp",
+    "mark_target_guarded",
+    "mark_target_protected",
+)
+HEURISTIC_VISIBLE_FEATURE_NAMES: tuple[str, ...] = tuple(
+    name for name in ENEMY_DECISION_FEATURE_NAMES if name not in LEARNING_ONLY_FEATURE_NAMES
+)
+
 
 @dataclass(frozen=True)
 class EnemyDecisionFeatureSchema:
@@ -81,6 +118,15 @@ class EnemyDecisionFeatureSchema:
                 f"got {len(values)}"
             )
         return dict(zip(self.names, values, strict=True))
+
+    def indices_for(self, names: tuple[str, ...]) -> tuple[int, ...]:
+        positions = {name: index for index, name in enumerate(self.names)}
+        missing = tuple(name for name in names if name not in positions)
+        if missing:
+            raise ValueError(f"Unknown feature names for {self.schema_id}: {missing}")
+        if len(set(names)) != len(names):
+            raise ValueError("Feature selections must not contain duplicates.")
+        return tuple(positions[name] for name in names)
 
 
 ENEMY_DECISION_FEATURE_SCHEMA = EnemyDecisionFeatureSchema(
