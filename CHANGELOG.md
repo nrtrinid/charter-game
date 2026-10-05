@@ -14,6 +14,7 @@ still require explicit user approval.
 
 ### Added
 
+- 2026-10-04 - Added CP6 stateful multi-encounter route evaluation over production company/combat persistence, with paired frozen-policy route comparisons, fresh-versus-conditioned encounter analysis, downstream attrition attribution, behavior revaluation, and explicit withdrawal/missingness limitations; no production balance or gameplay rules changed.
 - 2026-10-04 - Added untouched-seed CP5 confirmation and robustness auditing for frozen ?0/?1/?2 enemy policies, including paired statistics, encounter/hero-policy breakdowns, targeting and disagreement diagnostics, and a bounded counterfactual spot audit without changing production gameplay.
 - 2026-10-04 - Added one bounded iterative enemy-policy research cycle using the frozen CP3 learned policy for source-state generation and counterfactual continuation, with CP3→CP4 distribution audits, fresh TRAIN-only normalization, sealed π1→π2 evaluation, paired π0/π1/π2 rollouts, and an untouched future-confirmation seed reservation.
 - 2026-10-04 - Added deterministic counterfactual outcome-ranking research with exact prefix replay, factual outcome features, Pareto preference labels, sealed held-out evaluation, and one-step policy-improvement analysis without changing production enemy AI.
