@@ -136,6 +136,7 @@ python -m mypy src
 
 ## Durable Memory
 
+- 2026-10-04 - CP4 showed that training on CP3-policy-induced states creates real victory supervision and reduces local domination, but one further greedy policy-improvement step did not clearly strengthen recursive play: company_survival reproduced π1 at 27.27% wins while π2 reached 25.00% with no significant paired difference. Treat local Q-improvement and recursive-policy stability as separate problems; keep the reserved future-confirmation seeds untouched until a dedicated confirmation step.
 - 2026-10-04 - CP3 showed that one-step counterfactual improvement and recursively deployed policy behavior are distinct evaluation questions. The frozen ranker improved many local Pareto comparisons and produced promising exploratory enemy-win gains under company_survival, but recursive rollouts visit policy-induced states outside the heuristic source distribution; require iterative on-policy state collection and evaluation before gameplay promotion.
 - 2026-10-04 - Future enemy-policy optimization should treat simulator kits/rules as
   legal constraints and optimize combat success rather than rewarding authored archetype

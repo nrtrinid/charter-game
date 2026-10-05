@@ -14,6 +14,7 @@ still require explicit user approval.
 
 ### Added
 
+- 2026-10-04 - Added one bounded iterative enemy-policy research cycle using the frozen CP3 learned policy for source-state generation and counterfactual continuation, with CP3→CP4 distribution audits, fresh TRAIN-only normalization, sealed π1→π2 evaluation, paired π0/π1/π2 rollouts, and an untouched future-confirmation seed reservation.
 - 2026-10-04 - Added deterministic counterfactual outcome-ranking research with exact prefix replay, factual outcome features, Pareto preference labels, sealed held-out evaluation, and one-step policy-improvement analysis without changing production enemy AI.
 - 2026-10-04 - Added the supervised ML candidate-ranking research pipeline with
   train-only normalization, same-objective linear and small MLP scorers, sealed
