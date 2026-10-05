@@ -136,6 +136,7 @@ python -m mypy src
 
 ## Durable Memory
 
+- 2026-10-04 - CP3 showed that one-step counterfactual improvement and recursively deployed policy behavior are distinct evaluation questions. The frozen ranker improved many local Pareto comparisons and produced promising exploratory enemy-win gains under company_survival, but recursive rollouts visit policy-induced states outside the heuristic source distribution; require iterative on-policy state collection and evaluation before gameplay promotion.
 - 2026-10-04 - Future enemy-policy optimization should treat simulator kits/rules as
   legal constraints and optimize combat success rather than rewarding authored archetype
   behavior; signature/combo usage belongs in telemetry, and prescriptive engineered ML

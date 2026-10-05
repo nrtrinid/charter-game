@@ -14,6 +14,7 @@ still require explicit user approval.
 
 ### Added
 
+- 2026-10-04 - Added deterministic counterfactual outcome-ranking research with exact prefix replay, factual outcome features, Pareto preference labels, sealed held-out evaluation, and one-step policy-improvement analysis without changing production enemy AI.
 - 2026-10-04 - Added the supervised ML candidate-ranking research pipeline with
   train-only normalization, same-objective linear and small MLP scorers, sealed
   held-out evaluation, deterministic artifact reloads, and paired simulator rollouts.
