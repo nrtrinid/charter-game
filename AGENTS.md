@@ -136,6 +136,7 @@ python -m mypy src
 
 ## Durable Memory
 
+- 2026-10-04 - CP5 untouched seeds 30001-30128 confirmed the company_survival learned-policy advantage: heuristic 4.26% enemy wins, CP3 ?1 23.44%, CP4 ?2 25.36%. ?1 and ?2 were approximately equivalent by the frozen paired rule; low Mark/Grab/Guard persisted, and stronger learned play was not more focus-fire-heavy by the measured targeting diagnostics. Treat this as early stabilization, not evidence for ?3 or production promotion.
 - 2026-10-04 - CP4 showed that training on CP3-policy-induced states creates real victory supervision and reduces local domination, but one further greedy policy-improvement step did not clearly strengthen recursive play: company_survival reproduced π1 at 27.27% wins while π2 reached 25.00% with no significant paired difference. Treat local Q-improvement and recursive-policy stability as separate problems; keep the reserved future-confirmation seeds untouched until a dedicated confirmation step.
 - 2026-10-04 - CP3 showed that one-step counterfactual improvement and recursively deployed policy behavior are distinct evaluation questions. The frozen ranker improved many local Pareto comparisons and produced promising exploratory enemy-win gains under company_survival, but recursive rollouts visit policy-induced states outside the heuristic source distribution; require iterative on-policy state collection and evaluation before gameplay promotion.
 - 2026-10-04 - Future enemy-policy optimization should treat simulator kits/rules as
