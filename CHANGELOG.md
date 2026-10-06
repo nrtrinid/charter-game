@@ -14,6 +14,7 @@ still require explicit user approval.
 
 ### Added
 
+- 2026-10-05 - Added CP10 conservative route-policy repair research with frozen CP9 failure diagnosis, TRAIN-derived state-support auditing, bounded pi3-induced route counterfactuals, validation-selected pi2-anchored deviation gating, sealed pi4 recursive evaluation, and no production AI/gameplay/balance changes.
 - 2026-10-05 - Added CP9 bounded route-aware enemy-policy learning research with exact full-route counterfactual replay, tactical-vs-route-context observation auditing, train-only normalization, sealed held-out route evaluation, and explicit recursive-distribution failure analysis; production AI, combat balance, routes, and Maze behavior remain unchanged.
 - 2026-10-05 - Added CP8 route-aware frozen-policy causal mechanic perturbation research with isolated process-local variants, exact CP7 baseline equivalence, fresh paired route seeds, dual local/route horizon analysis, observability and strategy-collapse audits, and no production balance/gameplay changes.
 - 2026-10-04 - Added CP7 production-faithful research termination that separates gameplay victory/retreat from execution safety bounds, replays the exact CP6 route suite with explicit censoring semantics, fixes unreached-target analysis, and requalifies route policy strength without changing production combat or balance.
