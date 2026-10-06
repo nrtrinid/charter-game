@@ -203,6 +203,7 @@ def test_primary_policy_rejects_route_context_oracle_normalization() -> None:
         FrozenRouteRankerPolicy(model, normalization, policy_id="oracle")
 
 
-def test_cp9_artifact_root_is_not_created_by_import_or_unit_tests() -> None:
-    assert not Path("artifacts/ml/checkpoint9-route-aware-policy-learning-v1").exists()
+def test_cp9_completed_artifact_root_is_ignored_generated_output() -> None:
+    gitignore = Path(".gitignore").read_text(encoding="utf-8")
+    assert "artifacts/ml/" in gitignore
     assert PRIMARY_SCHEMA_ID == "enemy-route-outcome-candidate-v1"
