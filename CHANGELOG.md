@@ -14,6 +14,7 @@ still require explicit user approval.
 
 ### Added
 
+- 2026-10-05 - Added CP8 route-aware frozen-policy causal mechanic perturbation research with isolated process-local variants, exact CP7 baseline equivalence, fresh paired route seeds, dual local/route horizon analysis, observability and strategy-collapse audits, and no production balance/gameplay changes.
 - 2026-10-04 - Added CP7 production-faithful research termination that separates gameplay victory/retreat from execution safety bounds, replays the exact CP6 route suite with explicit censoring semantics, fixes unreached-target analysis, and requalifies route policy strength without changing production combat or balance.
 - 2026-10-04 - Added CP6 stateful multi-encounter route evaluation over production company/combat persistence, with paired frozen-policy route comparisons, fresh-versus-conditioned encounter analysis, downstream attrition attribution, behavior revaluation, and explicit withdrawal/missingness limitations; no production balance or gameplay rules changed.
 - 2026-10-04 - Added untouched-seed CP5 confirmation and robustness auditing for frozen ?0/?1/?2 enemy policies, including paired statistics, encounter/hero-policy breakdowns, targeting and disagreement diagnostics, and a bounded counterfactual spot audit without changing production gameplay.
